@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCycleData } from '@/hooks/use-storage';
+import { useCycleData, useUserProfile } from '@/hooks/use-storage';
 import { CyclePhase } from '@/types';
 
 const phaseInfo: Record<CyclePhase, { label: string; color: (colors: any) => string; description: string }> = {
@@ -46,21 +46,24 @@ export default function TodayScreen() {
   const colors = Colors[colorScheme ?? 'light'];
   const router = useRouter();
 
-  const { cycleData, cycleStatus, loading, refresh } = useCycleData();
+  const { cycleData, cycleStatus, loading, refresh: refreshCycle } = useCycleData();
+  const { profile, refresh: refreshProfile } = useUserProfile();
   const [refreshing, setRefreshing] = useState(false);
 
   // Refresh data when screen comes into focus
   useFocusEffect(
     useCallback(() => {
-      refresh();
-    }, [refresh])
+      refreshCycle();
+      refreshProfile();
+    }, [refreshCycle, refreshProfile])
   );
 
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await refresh();
+    await refreshCycle();
+    await refreshProfile();
     setRefreshing(false);
-  }, [refresh]);
+  }, [refreshCycle, refreshProfile]);
 
   if (loading && !refreshing) {
     return (
@@ -91,6 +94,22 @@ export default function TodayScreen() {
 
   const fertility = getFertilityLevel();
 
+  // Goal-based Content Logic
+  const isTTC = profile.goal === 'pregnant';
+  const isPregnancy = profile.goal === 'pregnancy';
+
+  const getDailyInsight = () => {
+    if (isTTC) {
+      if (cycleStatus?.fertileWindow) return "You're in your fertile window! Good time to try.";
+      if (cycleStatus?.ovulationDay) return "Peak fertility today! Best chance for conception.";
+      return "Track your basal body temperature for better fertility predictions.";
+    }
+    if (isPregnancy) {
+      return "Baby is the size of a poppy seed today (Week 4).";
+    }
+    return currentPhase.description;
+  };
+
   return (
     <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
       <ScrollView
@@ -109,7 +128,7 @@ export default function TodayScreen() {
         <View style={styles.header}>
           <View>
             <Text style={[styles.greeting, { color: colors.textSecondary }]}>Good morning,</Text>
-            <Text style={[styles.name, { color: colors.text }]}>Sarah</Text>
+            <Text style={[styles.name, { color: colors.text }]}>{profile.name || 'Sarah'}</Text>
           </View>
           <TouchableOpacity style={[styles.notificationButton, { backgroundColor: colors.backgroundSecondary }]}>
             <Ionicons name="notifications-outline" size={24} color={colors.text} />
@@ -125,48 +144,68 @@ export default function TodayScreen() {
             </View>
             <View style={styles.cycleDivider} />
             <View style={styles.periodInfo}>
-              <Text style={styles.periodLabel}>Period in</Text>
-              <Text style={styles.periodDays}>{cycleStatus?.daysUntilPeriod ?? 0} days</Text>
+              <Text style={styles.periodLabel}>{isTTC ? 'Fertile in' : 'Period in'}</Text>
+              <Text style={styles.periodDays}>
+                {!isTTC ? (
+                  `${cycleStatus?.daysUntilPeriod ?? 0} days`
+                ) : (
+                  cycleStatus?.fertileWindow ? 'Now' : 'Soon'
+                )}
+              </Text>
+              {cycleData.lastPeriodStart && (
+                <Text style={[styles.periodLabel, { marginTop: 4, fontSize: 10 }]}>
+                  Last: {new Date(cycleData.lastPeriodStart).toLocaleDateString()}
+                </Text>
+              )}
             </View>
           </View>
           <View style={styles.progressBar}>
             <View
               style={[
                 styles.progressFill,
-                { width: `${((cycleStatus?.currentDay ?? 1) / (cycleData.cycleLength || 28)) * 100}%` }
+                { width: `${Math.min(((cycleStatus?.currentDay ?? 1) / (cycleData.cycleLength || 28)) * 100, 100)}%` }
               ]}
             />
           </View>
-          <Text style={styles.phaseLabel}>{currentPhase.label}</Text>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Text style={styles.phaseLabel}>{currentPhase.label}</Text>
+            {cycleData.lastPeriodStart && (
+              <Text style={[styles.phaseLabel, { opacity: 0.8 }]}>
+                Next: {new Date(new Date(cycleData.lastPeriodStart).getTime() + (cycleData.cycleLength * 24 * 60 * 60 * 1000)).toLocaleDateString()}
+              </Text>
+            )}
+          </View>
         </View>
 
         {/* Quick Stats */}
-        <View style={styles.statsRow}>
-          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-            <View style={[styles.statIcon, { backgroundColor: colors.period + '20' }]}>
-              <Ionicons name="heart" size={20} color={colors.period} />
+        {!isPregnancy && (
+          <View style={styles.statsRow}>
+            <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+              <View style={[styles.statIcon, { backgroundColor: colors.period + '20' }]}>
+                <Ionicons name="heart" size={20} color={colors.period} />
+              </View>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pregnancy</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{fertility.pregnancy} Chance</Text>
             </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pregnancy</Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>{fertility.pregnancy} Chance</Text>
-          </View>
-          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-            <View style={[styles.statIcon, { backgroundColor: colors.fertile + '20' }]}>
-              <Ionicons name="leaf" size={20} color={colors.fertile} />
+            <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+              <View style={[styles.statIcon, { backgroundColor: colors.fertile + '20' }]}>
+                <Ionicons name="leaf" size={20} color={colors.fertile} />
+              </View>
+              <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Fertility</Text>
+              <Text style={[styles.statValue, { color: colors.text }]}>{fertility.fertility}</Text>
             </View>
-            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Fertility</Text>
-            <Text style={[styles.statValue, { color: colors.text }]}>{fertility.fertility}</Text>
           </View>
-        </View>
+        )}
 
         {/* Daily Insight */}
         <View style={[styles.insightCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
           <View style={[styles.insightIcon, { backgroundColor: colors.ovulation + '20' }]}>
-            <Ionicons name="bulb" size={24} color={colors.ovulation} />
+            <Ionicons name={isTTC ? "heart-circle" : "bulb"} size={24} color={colors.ovulation} />
           </View>
           <View style={styles.insightContent}>
-            <Text style={[styles.insightTitle, { color: colors.text }]}>Daily Insight</Text>
+            <Text style={[styles.insightTitle, { color: colors.text }]}>{isTTC ? 'TTC Tip of the Day' : 'Daily Insight'}</Text>
             <Text style={[styles.insightText, { color: colors.textSecondary }]}>
-              {currentPhase.description}
+              {getDailyInsight()}
             </Text>
           </View>
         </View>

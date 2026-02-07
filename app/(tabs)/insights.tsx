@@ -1,4 +1,4 @@
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import {
     Dimensions,
@@ -9,289 +9,245 @@ import {
     TouchableOpacity,
     View,
 } from 'react-native';
-
-import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { BarChart, LineChart } from 'react-native-chart-kit';
 
 const { width } = Dimensions.get('window');
 
-const cycleData = [
-    { month: 'JAN', value: 28 },
-    { month: 'FEB', value: 29 },
-    { month: 'MAR', value: 27 },
-    { month: 'APR', value: 28 },
-    { month: 'MAY', value: 30 },
-    { month: 'JUN', value: 28 },
-];
+const THEME_COLOR = '#ec135b'; // Or use Colors.light.primary if strictly following theme
+const BACKGROUND_COLOR = '#fdfdfd';
+const SECONDARY_TEXT = '#6b7280';
 
-const articles = [
-    {
-        id: 1,
-        title: 'Understanding the Luteal Phase and your Mood',
-        readTime: '4 min read',
-        icon: 'bulb-outline',
-    },
-    {
-        id: 2,
-        title: 'The Best Superfoods to Balance Your Period',
-        readTime: '6 min read',
-        icon: 'nutrition-outline',
-    },
-    {
-        id: 3,
-        title: 'How Stress Impacts Your Cycle Regularity',
-        readTime: '3 min read',
-        icon: 'pulse-outline',
-    },
-];
+const HealthInsightsScreen = () => {
+    // Chart Data
+    const cycleHistoryData = {
+        labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+        datasets: [
+            {
+                data: [28, 29, 27, 30, 28, 28],
+                color: (opacity = 1) => `rgba(236, 19, 91, ${opacity})`,
+                strokeWidth: 3,
+            },
+        ],
+    };
 
-export default function InsightsScreen() {
-    const colorScheme = useColorScheme();
-    const colors = Colors[colorScheme ?? 'light'];
+    const symptomData = {
+        labels: ['Cramps', 'Mood', 'Acne', 'Fatigue'],
+        datasets: [
+            {
+                data: [8, 4, 2, 6],
+            },
+        ],
+    };
 
-    const maxValue = Math.max(...cycleData.map(d => d.value));
-    const chartHeight = 120;
+    const chartConfig = {
+        backgroundColor: '#ffffff',
+        backgroundGradientFrom: '#ffffff',
+        backgroundGradientTo: '#ffffff',
+        decimalPlaces: 0,
+        color: (opacity = 1) => `rgba(236, 19, 91, ${opacity})`,
+        labelColor: (opacity = 1) => `rgba(107, 114, 128, ${opacity})`,
+        style: {
+            borderRadius: 16,
+        },
+        propsForDots: {
+            r: '6',
+            strokeWidth: '2',
+            stroke: '#fff',
+        },
+    };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                {/* Cycle Length Chart */}
-                <View style={[styles.chartCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                    <Text style={[styles.chartTitle, { color: colors.text }]}>
-                        Cycle Length Variation
-                    </Text>
-                    <Text style={[styles.chartSubtitle, { color: colors.textSecondary }]}>
-                        28 days avg.
-                    </Text>
+        <SafeAreaView style={styles.container}>
 
-                    <View style={styles.chartContainer}>
-                        {cycleData.map((data, index) => {
-                            const barHeight = (data.value / maxValue) * chartHeight;
-                            return (
-                                <View key={index} style={styles.barContainer}>
-                                    <View style={styles.barWrapper}>
-                                        <View
-                                            style={[
-                                                styles.bar,
-                                                {
-                                                    height: barHeight,
-                                                    backgroundColor: index === cycleData.length - 1 ? colors.primary : colors.primaryLight + '60',
-                                                }
-                                            ]}
-                                        />
-                                    </View>
-                                    <Text style={[styles.barLabel, { color: colors.textSecondary }]}>
-                                        {data.month}
-                                    </Text>
-                                </View>
-                            );
-                        })}
+            {/* Header - Adjusted for Tab Screen (No back button needed usually) */}
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Insights</Text>
+                <TouchableOpacity style={styles.calendarButton}>
+                    <Ionicons name="calendar-outline" size={24} color={THEME_COLOR} />
+                </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+                {/* Cycle Length Trend */}
+                <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardTitle}>Cycle History</Text>
+                        <Text style={styles.cardSubtitle}>Avg. 28 days</Text>
+                    </View>
+                    <LineChart
+                        data={cycleHistoryData}
+                        width={width - 48} // Adjusted width
+                        height={220}
+                        chartConfig={chartConfig}
+                        bezier
+                        style={styles.chart}
+                        withInnerLines={false}
+                        withOuterLines={false}
+                        verticalLabelRotation={0}
+                    />
+                </View>
+
+                {/* Symptom Trends */}
+                <View style={styles.card}>
+                    <View style={styles.cardHeader}>
+                        <Text style={styles.cardTitle}>Top Symptoms</Text>
+                        <Text style={styles.cardSubtitle}>Last 30 days</Text>
+                    </View>
+                    <BarChart
+                        data={symptomData}
+                        width={width - 48}
+                        height={220}
+                        chartConfig={{
+                            ...chartConfig,
+                            color: (opacity = 1) => `rgba(236, 19, 91, ${opacity})`,
+                        }}
+                        style={styles.chart}
+                        withInnerLines={false}
+                        fromZero
+                        showValuesOnTopOfBars
+                        yAxisLabel=""
+                        yAxisSuffix=""
+                    />
+                </View>
+
+                {/* Personalized Tips */}
+                <View style={styles.tipsSection}>
+                    <Text style={styles.sectionTitle}>Personalized Tips</Text>
+                    <View style={styles.tipCard}>
+                        <View style={styles.tipIconContainer}>
+                            <MaterialCommunityIcons name="lightning-bolt" size={24} color={THEME_COLOR} />
+                        </View>
+                        <View style={styles.tipTextContainer}>
+                            <Text style={styles.tipTitle}>Energy Peak</Text>
+                            <Text style={styles.tipDescription}>
+                                You're in your Follicular phase. It's a great time for high-intensity workouts!
+                            </Text>
+                        </View>
+                    </View>
+
+                    <View style={[styles.tipCard, { backgroundColor: '#fdf2f4' }]}>
+                        <View style={[styles.tipIconContainer, { backgroundColor: '#fff' }]}>
+                            <Ionicons name="leaf-outline" size={24} color={THEME_COLOR} />
+                        </View>
+                        <View style={styles.tipTextContainer}>
+                            <Text style={styles.tipTitle}>Hydration Alert</Text>
+                            <Text style={styles.tipDescription}>
+                                Users with your pattern often feel bloated. Increase water intake by 500ml today.
+                            </Text>
+                        </View>
                     </View>
                 </View>
 
-                {/* Stats Grid */}
-                <View style={styles.statsGrid}>
-                    <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                        <Text style={[styles.statValue, { color: colors.primary }]}>28</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Days</Text>
-                        <Text style={[styles.statDescription, { color: colors.text }]}>Avg. Cycle</Text>
-                    </View>
-
-                    <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                        <View style={styles.statRow}>
-                            <Ionicons name="remove" size={16} color={colors.success} />
-                            <Text style={[styles.statChange, { color: colors.success }]}>0%</Text>
-                        </View>
-                        <Text style={[styles.statDescription, { color: colors.text }]}>change</Text>
-                    </View>
-
-                    <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                        <View style={[styles.consistencyBadge, { backgroundColor: colors.success + '20' }]}>
-                            <Ionicons name="checkmark-circle" size={20} color={colors.success} />
-                        </View>
-                        <Text style={[styles.statDescription, { color: colors.text }]}>High</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Consistency</Text>
-                    </View>
-
-                    <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                        <View style={[styles.logsBadge, { backgroundColor: colors.primary + '20' }]}>
-                            <Ionicons name="document-text" size={20} color={colors.primary} />
-                        </View>
-                        <Text style={[styles.statDescription, { color: colors.text }]}>Consistent</Text>
-                        <Text style={[styles.statLabel, { color: colors.textSecondary }]}>logs</Text>
-                    </View>
-                </View>
-
-                {/* Discover Section */}
-                <View style={styles.discoverSection}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Discover</Text>
-                        <TouchableOpacity>
-                            <Text style={[styles.seeAllText, { color: colors.primary }]}>See All</Text>
-                        </TouchableOpacity>
-                    </View>
-
-                    {articles.map((article) => (
-                        <TouchableOpacity
-                            key={article.id}
-                            style={[styles.articleCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
-                        >
-                            <View style={[styles.articleIcon, { backgroundColor: colors.backgroundTertiary }]}>
-                                <Ionicons name={article.icon as any} size={24} color={colors.primary} />
-                            </View>
-                            <View style={styles.articleContent}>
-                                <Text style={[styles.articleTitle, { color: colors.text }]} numberOfLines={2}>
-                                    {article.title}
-                                </Text>
-                                <Text style={[styles.articleReadTime, { color: colors.textSecondary }]}>
-                                    {article.readTime}
-                                </Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-                        </TouchableOpacity>
-                    ))}
-                </View>
+                {/* Footer spacing */}
+                <View style={{ height: 40 }} />
             </ScrollView>
         </SafeAreaView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: BACKGROUND_COLOR,
+    },
+    header: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        paddingHorizontal: 20,
+        paddingVertical: 15,
+    },
+    backButton: {
+        // hidden
+    },
+    calendarButton: {
+        padding: 8,
+        backgroundColor: '#fdf2f4',
+        borderRadius: 12,
+    },
+    headerTitle: {
+        fontSize: 28,
+        fontFamily: 'Manrope_700Bold',
+        color: '#111827',
     },
     scrollContent: {
-        paddingHorizontal: Spacing.lg,
-        paddingBottom: Spacing.xxl,
-        paddingTop: Spacing.md,
+        paddingHorizontal: 16,
     },
-    chartCard: {
-        padding: Spacing.lg,
-        borderRadius: BorderRadius.xl,
-        borderWidth: 1,
-        marginBottom: Spacing.lg,
+    card: {
+        backgroundColor: '#ffffff',
+        borderRadius: 24,
+        padding: 16,
+        marginBottom: 20,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 2,
     },
-    chartTitle: {
-        ...Typography.h4,
-        marginBottom: Spacing.xs,
-    },
-    chartSubtitle: {
-        ...Typography.bodySm,
-        marginBottom: Spacing.lg,
-    },
-    chartContainer: {
+    cardHeader: {
+        marginBottom: 15,
         flexDirection: 'row',
         justifyContent: 'space-between',
-        alignItems: 'flex-end',
-        height: 150,
+        alignItems: 'baseline',
     },
-    barContainer: {
-        alignItems: 'center',
-        flex: 1,
+    cardTitle: {
+        fontSize: 18,
+        fontFamily: 'Manrope_700Bold',
+        color: '#1f2937',
     },
-    barWrapper: {
-        height: 120,
-        justifyContent: 'flex-end',
-        marginBottom: Spacing.sm,
+    cardSubtitle: {
+        fontSize: 14,
+        fontFamily: 'Manrope_500Medium',
+        color: SECONDARY_TEXT,
     },
-    bar: {
-        width: 32,
-        borderRadius: BorderRadius.md,
-    },
-    barLabel: {
-        ...Typography.caption,
-    },
-    statsGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: Spacing.sm,
-        marginBottom: Spacing.lg,
-    },
-    statCard: {
-        width: (width - Spacing.lg * 2 - Spacing.sm) / 2,
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
-        alignItems: 'center',
-        marginBottom: Spacing.sm,
-    },
-    statValue: {
-        fontSize: 32,
-        fontWeight: '700',
-        lineHeight: 40,
-    },
-    statLabel: {
-        ...Typography.caption,
-    },
-    statDescription: {
-        ...Typography.bodyMedium,
-    },
-    statRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs,
-    },
-    statChange: {
-        ...Typography.h3,
-    },
-    consistencyBadge: {
-        width: 40,
-        height: 40,
-        borderRadius: BorderRadius.full,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: Spacing.xs,
-    },
-    logsBadge: {
-        width: 40,
-        height: 40,
-        borderRadius: BorderRadius.full,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: Spacing.xs,
-    },
-    discoverSection: {
-        marginTop: Spacing.sm,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: Spacing.md,
+    chart: {
+        marginVertical: 8,
+        borderRadius: 16,
     },
     sectionTitle: {
-        ...Typography.h3,
+        fontSize: 20,
+        fontFamily: 'Manrope_700Bold',
+        color: '#1f2937',
+        marginBottom: 16,
     },
-    seeAllText: {
-        ...Typography.bodyMedium,
+    tipsSection: {
+        marginBottom: 20,
     },
-    articleCard: {
+    tipCard: {
         flexDirection: 'row',
+        backgroundColor: '#fff',
+        padding: 16,
+        borderRadius: 20,
+        marginBottom: 12,
         alignItems: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
         borderWidth: 1,
-        marginBottom: Spacing.sm,
+        borderColor: '#f3f4f6',
     },
-    articleIcon: {
+    tipIconContainer: {
         width: 48,
         height: 48,
-        borderRadius: BorderRadius.md,
+        borderRadius: 14,
+        backgroundColor: '#fff1f2',
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
+        marginRight: 16,
     },
-    articleContent: {
+    tipTextContainer: {
         flex: 1,
     },
-    articleTitle: {
-        ...Typography.bodyMedium,
-        marginBottom: Spacing.xs,
+    tipTitle: {
+        fontSize: 16,
+        fontFamily: 'Manrope_700Bold',
+        color: '#111827',
     },
-    articleReadTime: {
-        ...Typography.caption,
+    tipDescription: {
+        fontSize: 14,
+        fontFamily: 'Manrope_400Regular',
+        color: SECONDARY_TEXT,
+        lineHeight: 20,
+        marginTop: 2,
     },
 });
+
+export default HealthInsightsScreen;

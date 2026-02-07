@@ -3,19 +3,21 @@ import { useFocusEffect } from '@react-navigation/native';
 import React, { useCallback, useState } from 'react';
 import {
     ActivityIndicator,
+    FlatList,
     RefreshControl,
+    SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useCycleData } from '@/hooks/use-storage';
-import { CycleEntry, FlowLevel, MoodType } from '@/types';
+import { CycleEntry, MoodType } from '@/types';
 
 const moodEmojis: Record<MoodType, string> = {
     happy: '😊',
@@ -26,128 +28,15 @@ const moodEmojis: Record<MoodType, string> = {
     sad: '😢',
 };
 
-const flowLabels: Record<FlowLevel, string> = {
-    none: 'No Flow',
-    light: 'Light',
-    medium: 'Medium',
-    heavy: 'Heavy',
-};
-
-const flowColors: Record<FlowLevel, string> = {
-    none: '#9ca3af',
-    light: '#f9a8d4',
-    medium: '#ec4899',
-    heavy: '#be185d',
-};
-
-function formatDate(dateStr: string): string {
-    const date = new Date(dateStr);
-    const today = new Date();
-    const yesterday = new Date(today);
-    yesterday.setDate(yesterday.getDate() - 1);
-
-    if (dateStr === formatISO(today)) return 'Today';
-    if (dateStr === formatISO(yesterday)) return 'Yesterday';
-
-    return date.toLocaleDateString('en-US', {
-        weekday: 'short',
-        month: 'short',
-        day: 'numeric'
-    });
-}
-
-function formatISO(date: Date): string {
-    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-}
-
-interface DayCardProps {
-    entry: CycleEntry;
-    colors: any;
-    expanded: boolean;
-    onToggle: () => void;
-}
-
-function DayCard({ entry, colors, expanded, onToggle }: DayCardProps) {
-    return (
-        <TouchableOpacity
-            style={[styles.dayCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
-            onPress={onToggle}
-            activeOpacity={0.7}
-        >
-            <View style={styles.dayCardHeader}>
-                <View style={styles.dayInfo}>
-                    <Text style={[styles.dayDate, { color: colors.text }]}>{formatDate(entry.date)}</Text>
-                    <View style={styles.dayMeta}>
-                        {entry.mood && (
-                            <Text style={styles.moodEmoji}>{moodEmojis[entry.mood]}</Text>
-                        )}
-                        {entry.flow && entry.flow !== 'none' && (
-                            <View style={[styles.flowBadge, { backgroundColor: flowColors[entry.flow] + '20' }]}>
-                                <View style={[styles.flowDot, { backgroundColor: flowColors[entry.flow] }]} />
-                                <Text style={[styles.flowText, { color: flowColors[entry.flow] }]}>
-                                    {flowLabels[entry.flow]}
-                                </Text>
-                            </View>
-                        )}
-                    </View>
-                </View>
-                <Ionicons
-                    name={expanded ? 'chevron-up' : 'chevron-down'}
-                    size={20}
-                    color={colors.textTertiary}
-                />
-            </View>
-
-            {expanded && (
-                <View style={styles.dayCardExpanded}>
-                    <View style={[styles.divider, { backgroundColor: colors.border }]} />
-
-                    {entry.symptoms && entry.symptoms.length > 0 && (
-                        <View style={styles.symptomsList}>
-                            <Text style={[styles.expandedLabel, { color: colors.textSecondary }]}>Symptoms</Text>
-                            <View style={styles.symptomsChips}>
-                                {entry.symptoms.map((symptom) => (
-                                    <View
-                                        key={symptom}
-                                        style={[styles.symptomChip, { backgroundColor: colors.backgroundTertiary }]}
-                                    >
-                                        <Text style={[styles.symptomText, { color: colors.text }]}>
-                                            {symptom.charAt(0).toUpperCase() + symptom.slice(1)}
-                                        </Text>
-                                    </View>
-                                ))}
-                            </View>
-                        </View>
-                    )}
-
-                    {entry.notes && (
-                        <View style={styles.notesSection}>
-                            <Text style={[styles.expandedLabel, { color: colors.textSecondary }]}>Notes</Text>
-                            <Text style={[styles.notesText, { color: colors.text }]}>{entry.notes}</Text>
-                        </View>
-                    )}
-
-                    {!entry.symptoms?.length && !entry.notes && (
-                        <Text style={[styles.noDetailsText, { color: colors.textTertiary }]}>
-                            No additional details logged
-                        </Text>
-                    )}
-                </View>
-            )}
-        </TouchableOpacity>
-    );
-}
+const FILTERS = ['All', 'Symptoms', 'Flow', 'Notes'];
 
 export default function HistoryScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
-
     const { cycleData, loading, refresh } = useCycleData();
-    const [expandedId, setExpandedId] = useState<string | null>(null);
-    const [filter, setFilter] = useState<'all' | 'flow' | 'symptoms'>('all');
     const [refreshing, setRefreshing] = useState(false);
+    const [activeFilter, setActiveFilter] = useState('All');
 
-    // Refresh data when screen comes into focus
     useFocusEffect(
         useCallback(() => {
             refresh();
@@ -162,7 +51,7 @@ export default function HistoryScreen() {
 
     if (loading && !refreshing) {
         return (
-            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+            <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
                 <View style={styles.loadingContainer}>
                     <ActivityIndicator size="large" color={colors.primary} />
                 </View>
@@ -170,237 +59,259 @@ export default function HistoryScreen() {
         );
     }
 
-    // Filter entries
-    const filteredEntries = cycleData.entries.filter(entry => {
-        if (filter === 'all') return true;
-        if (filter === 'flow') return entry.flow && entry.flow !== 'none';
-        if (filter === 'symptoms') return entry.symptoms && entry.symptoms.length > 0;
+    // Filter Logic
+    const filteredData = cycleData.entries.filter(entry => {
+        if (activeFilter === 'All') return true;
+        if (activeFilter === 'Symptoms') return entry.symptoms && entry.symptoms.length > 0;
+        if (activeFilter === 'Flow') return entry.flow && entry.flow !== 'none';
+        if (activeFilter === 'Notes') return entry.notes;
         return true;
     });
 
-    const toggleExpanded = (id: string) => {
-        setExpandedId(expandedId === id ? null : id);
+    const formatDate = (dateStr: string) => {
+        const date = new Date(dateStr);
+        return {
+            date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            day: date.toLocaleDateString('en-US', { weekday: 'long' }),
+        };
+    };
+
+    const getFlowLevel = (flow: string | undefined): number => {
+        if (!flow || flow === 'none') return 0;
+        if (flow === 'light') return 1;
+        if (flow === 'medium') return 2;
+        if (flow === 'heavy') return 3;
+        return 0;
+    };
+
+    const renderItem = ({ item, index }: { item: CycleEntry; index: number }) => {
+        const { date, day } = formatDate(item.date);
+        const flowLevel = getFlowLevel(item.flow);
+
+        return (
+            <Animated.View
+                entering={FadeInDown.delay(index * 50).duration(400)}
+                style={styles.timelineItem}
+            >
+                {/* Timeline Visuals */}
+                <View style={styles.timelineLeft}>
+                    <View style={[styles.timelineDot, { backgroundColor: colors.primary }]} />
+                    {index !== filteredData.length - 1 && (
+                        <View style={styles.timelineLine} />
+                    )}
+                </View>
+
+                {/* Entry Card */}
+                <TouchableOpacity style={styles.card} activeOpacity={0.8}>
+                    <View style={styles.cardHeader}>
+                        <View>
+                            <Text style={styles.dateText}>{date}</Text>
+                            <Text style={styles.dayText}>{day}</Text>
+                        </View>
+                        {item.mood && (
+                            <Text style={styles.moodEmoji}>{moodEmojis[item.mood]}</Text>
+                        )}
+                    </View>
+
+                    <View style={styles.cardBody}>
+                        <View style={styles.symptomContainer}>
+                            {item.symptoms?.map((s, i) => (
+                                <View key={i} style={styles.symptomPill}>
+                                    <Text style={[styles.symptomText, { color: colors.primary }]}>
+                                        {s.charAt(0).toUpperCase() + s.slice(1)}
+                                    </Text>
+                                </View>
+                            ))}
+                            {(!item.symptoms || item.symptoms.length === 0) && (
+                                <Text style={styles.emptyText}>No symptoms</Text>
+                            )}
+                        </View>
+
+                        {/* Flow Indicator */}
+                        <View style={styles.flowContainer}>
+                            {[1, 2, 3].map((dot) => (
+                                <View
+                                    key={dot}
+                                    style={[
+                                        styles.flowDot,
+                                        dot <= flowLevel
+                                            ? { backgroundColor: colors.primary }
+                                            : styles.flowDotInactive
+                                    ]}
+                                />
+                            ))}
+                        </View>
+                    </View>
+                </TouchableOpacity>
+            </Animated.View>
+        );
     };
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
-            {/* Header */}
+        <SafeAreaView style={[styles.container, { backgroundColor: '#FFFFFF' }]}>
             <View style={styles.header}>
-                <Text style={[styles.title, { color: colors.text }]}>Symptom History</Text>
+                <Text style={styles.title}>History</Text>
+                <TouchableOpacity style={styles.iconButton}>
+                    <Ionicons name="calendar-outline" color="#1A1A1A" size={24} />
+                </TouchableOpacity>
             </View>
 
-            {/* Filters */}
-            <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                style={styles.filtersScroll}
-                contentContainerStyle={styles.filtersContent}
-            >
-                {[
-                    { key: 'all', label: 'All' },
-                    { key: 'flow', label: 'Flow Days' },
-                    { key: 'symptoms', label: 'Symptoms' },
-                ].map((f) => (
-                    <TouchableOpacity
-                        key={f.key}
-                        style={[
-                            styles.filterChip,
-                            {
-                                backgroundColor: filter === f.key ? colors.primary : colors.backgroundSecondary,
-                            }
-                        ]}
-                        onPress={() => setFilter(f.key as any)}
-                    >
-                        <Text style={[
-                            styles.filterText,
-                            { color: filter === f.key ? '#fff' : colors.textSecondary }
-                        ]}>
-                            {f.label}
-                        </Text>
-                    </TouchableOpacity>
-                ))}
-            </ScrollView>
+            {/* Filter Section */}
+            <View style={styles.filterWrapper}>
+                <ScrollView
+                    horizontal
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={styles.filterScroll}
+                >
+                    {FILTERS.map((filter) => (
+                        <TouchableOpacity
+                            key={filter}
+                            onPress={() => setActiveFilter(filter)}
+                            style={[
+                                styles.filterPill,
+                                activeFilter === filter && { backgroundColor: colors.primary }
+                            ]}
+                        >
+                            <Text
+                                style={[
+                                    styles.filterText,
+                                    activeFilter === filter && styles.filterTextActive
+                                ]}
+                            >
+                                {filter}
+                            </Text>
+                        </TouchableOpacity>
+                    ))}
+                </ScrollView>
+            </View>
 
-            {/* History List with Pull to Refresh */}
-            <ScrollView
+            <FlatList
+                data={filteredData}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
                 showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
                 refreshControl={
-                    <RefreshControl
-                        refreshing={refreshing}
-                        onRefresh={onRefresh}
-                        tintColor={colors.primary}
-                        colors={[colors.primary]}
-                    />
+                    <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={colors.primary} />
                 }
-            >
-                {filteredEntries.length === 0 ? (
+                ListEmptyComponent={
                     <View style={styles.emptyState}>
-                        <View style={[styles.emptyIcon, { backgroundColor: colors.backgroundTertiary }]}>
-                            <Ionicons name="calendar-outline" size={48} color={colors.textTertiary} />
-                        </View>
-                        <Text style={[styles.emptyTitle, { color: colors.text }]}>No entries yet</Text>
-                        <Text style={[styles.emptyText, { color: colors.textSecondary }]}>
-                            Start logging your symptoms to see your history here
-                        </Text>
+                        <Text style={styles.emptyTitle}>No entries found</Text>
+                        <Text style={styles.emptyDescription}>Try adjusting your filters or log a new day.</Text>
                     </View>
-                ) : (
-                    filteredEntries.map((entry) => (
-                        <DayCard
-                            key={entry.id}
-                            entry={entry}
-                            colors={colors}
-                            expanded={expandedId === entry.id}
-                            onToggle={() => toggleExpanded(entry.id)}
-                        />
-                    ))
-                )}
-            </ScrollView>
+                }
+            />
         </SafeAreaView>
     );
 }
 
 const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-    },
-    loadingContainer: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
+    container: { flex: 1 },
+    loadingContainer: { flex: 1, justifyContent: 'center', alignItems: 'center' },
     header: {
-        paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.lg,
-        paddingBottom: Spacing.sm,
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 24,
+        paddingVertical: 20,
     },
     title: {
-        ...Typography.h2,
+        fontSize: 28,
+        fontFamily: 'Manrope_700Bold',
+        color: '#1A1A1A'
     },
-    filtersScroll: {
-        maxHeight: 50,
+    iconButton: {
+        padding: 8,
+        backgroundColor: '#F8F7FA',
+        borderRadius: 12
     },
-    filtersContent: {
-        paddingHorizontal: Spacing.lg,
-        gap: Spacing.sm,
-        paddingVertical: Spacing.sm,
-    },
-    filterChip: {
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        borderRadius: BorderRadius.full,
-        marginRight: Spacing.sm,
+    filterWrapper: { marginBottom: 16 },
+    filterScroll: { paddingHorizontal: 24, paddingBottom: 10 },
+    filterPill: {
+        paddingHorizontal: 20,
+        paddingVertical: 10,
+        borderRadius: 20,
+        backgroundColor: '#F3F3F7',
+        marginRight: 10,
     },
     filterText: {
-        ...Typography.label,
+        fontFamily: 'Manrope_600SemiBold',
+        color: '#666666',
+        fontSize: 14
     },
-    scrollContent: {
-        paddingHorizontal: Spacing.lg,
-        paddingBottom: Spacing.xxl,
-    },
-    dayCard: {
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
-        marginBottom: Spacing.md,
-        overflow: 'hidden',
-    },
-    dayCardHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        padding: Spacing.md,
-    },
-    dayInfo: {
+    filterTextActive: { color: '#FFFFFF' },
+    listContent: { paddingHorizontal: 24, paddingBottom: 40 },
+    timelineItem: { flexDirection: 'row', marginBottom: 20 },
+    timelineLeft: { width: 30, alignItems: 'center', paddingTop: 12 },
+    timelineDot: { width: 12, height: 12, borderRadius: 6, zIndex: 2, borderWidth: 2, borderColor: '#fff' },
+    timelineLine: { position: 'absolute', top: 20, bottom: -40, width: 2, backgroundColor: '#F3F3F7' },
+    card: {
         flex: 1,
+        backgroundColor: '#FFFFFF',
+        borderRadius: 20,
+        padding: 16,
+        marginLeft: 10,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.05,
+        shadowRadius: 10,
+        elevation: 3,
+        borderWidth: 1,
+        borderColor: '#F8F7FA',
     },
-    dayDate: {
-        ...Typography.bodyMedium,
-        marginBottom: Spacing.xs,
-    },
-    dayMeta: {
+    cardHeader: {
         flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.sm,
+        justifyContent: 'space-between',
+        marginBottom: 12
     },
-    moodEmoji: {
-        fontSize: 20,
+    dateText: {
+        fontSize: 16,
+        fontFamily: 'Manrope_700Bold',
+        color: '#1A1A1A'
     },
-    flowBadge: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.full,
-        gap: Spacing.xs,
+    dayText: {
+        fontSize: 13,
+        fontFamily: 'Manrope_400Regular',
+        color: '#666666'
     },
-    flowDot: {
-        width: 8,
-        height: 8,
-        borderRadius: 4,
+    moodEmoji: { fontSize: 24 },
+    cardBody: {
+        justifyContent: 'space-between',
+        gap: 12
     },
-    flowText: {
-        ...Typography.caption,
-        fontWeight: '600',
-    },
-    dayCardExpanded: {
-        padding: Spacing.md,
-        paddingTop: 0,
-    },
-    divider: {
-        height: 1,
-        marginBottom: Spacing.md,
-    },
-    expandedLabel: {
-        ...Typography.caption,
-        fontWeight: '600',
-        marginBottom: Spacing.sm,
-    },
-    symptomsList: {
-        marginBottom: Spacing.md,
-    },
-    symptomsChips: {
+    symptomContainer: {
         flexDirection: 'row',
         flexWrap: 'wrap',
-        gap: Spacing.sm,
+        gap: 6
     },
-    symptomChip: {
-        paddingHorizontal: Spacing.sm,
-        paddingVertical: Spacing.xs,
-        borderRadius: BorderRadius.sm,
+    symptomPill: {
+        backgroundColor: '#F3F3F7',
+        paddingHorizontal: 10,
+        paddingVertical: 6,
+        borderRadius: 8,
     },
     symptomText: {
-        ...Typography.caption,
-    },
-    notesSection: {
-        marginTop: Spacing.sm,
-    },
-    notesText: {
-        ...Typography.bodySm,
-        lineHeight: 20,
-    },
-    noDetailsText: {
-        ...Typography.bodySm,
-        fontStyle: 'italic',
-    },
-    emptyState: {
-        alignItems: 'center',
-        paddingVertical: Spacing.xxl * 2,
-    },
-    emptyIcon: {
-        width: 96,
-        height: 96,
-        borderRadius: BorderRadius.full,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: Spacing.lg,
-    },
-    emptyTitle: {
-        ...Typography.h3,
-        marginBottom: Spacing.sm,
+        fontSize: 12,
+        fontFamily: 'Manrope_600SemiBold',
     },
     emptyText: {
-        ...Typography.body,
-        textAlign: 'center',
-        paddingHorizontal: Spacing.xl,
+        fontSize: 13,
+        color: '#B6B1CC',
+        fontFamily: 'Manrope_400Regular',
+        fontStyle: 'italic'
     },
+    flowContainer: {
+        flexDirection: 'row',
+        gap: 4,
+        alignSelf: 'flex-start',
+        marginTop: 4,
+        padding: 4,
+        backgroundColor: '#F9FAFB',
+        borderRadius: 8,
+    },
+    flowDot: { width: 8, height: 8, borderRadius: 4 },
+    flowDotInactive: { backgroundColor: '#E5E7EB' },
+    emptyState: { alignItems: 'center', marginTop: 40 },
+    emptyTitle: { fontFamily: 'Manrope_700Bold', fontSize: 18, color: '#1A1A1A', marginBottom: 8 },
+    emptyDescription: { fontFamily: 'Manrope_400Regular', fontSize: 14, color: '#666666' },
 });

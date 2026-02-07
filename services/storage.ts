@@ -129,6 +129,13 @@ export async function setPin(pin: string): Promise<boolean> {
     return setItem(STORAGE_KEYS.PIN, pin);
 }
 
-export async function removePin(): Promise<boolean> {
-    return removeItem(STORAGE_KEYS.PIN);
+export async function clearAllData(): Promise<boolean> {
+    try {
+        const keys = Object.values(STORAGE_KEYS);
+        await AsyncStorage.multiRemove(keys);
+        return true;
+    } catch (error) {
+        console.error('Error clearing all data:', error);
+        return false;
+    }
 }

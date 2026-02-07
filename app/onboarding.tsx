@@ -2,220 +2,258 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    ActivityIndicator,
     Dimensions,
+    Keyboard,
+    KeyboardAvoidingView,
+    Platform,
     SafeAreaView,
+    ScrollView,
     StyleSheet,
+    Switch,
     Text,
+    TextInput,
     TouchableOpacity,
+    TouchableWithoutFeedback,
     View,
 } from 'react-native';
+import { Calendar } from 'react-native-calendars';
 
-import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
+import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCycleData, useOnboarding } from '@/hooks/use-storage';
+import { useCycleData, useOnboarding, useUserProfile } from '@/hooks/use-storage';
 
 const { width } = Dimensions.get('window');
 
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-const WEEKDAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-
-function getDaysInMonth(year: number, month: number) {
-    return new Date(year, month + 1, 0).getDate();
-}
-
-function getFirstDayOfMonth(year: number, month: number) {
-    return new Date(year, month, 1).getDay();
-}
-
-function formatDateISO(year: number, month: number, day: number): string {
-    return `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
-}
-
 export default function OnboardingScreen() {
+    const router = useRouter();
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
-    const router = useRouter();
 
-    const { setLastPeriod } = useCycleData();
+    // Hooks
+    const { saveData } = useCycleData();
+    const { updateProfile } = useUserProfile();
     const { completeOnboarding } = useOnboarding();
 
-    const today = new Date();
-    const [currentYear, setCurrentYear] = useState(today.getFullYear());
-    const [currentMonth, setCurrentMonth] = useState(today.getMonth());
-    const [selectedDate, setSelectedDate] = useState<number | null>(null);
-    const [saving, setSaving] = useState(false);
+    // State
+    const [step, setStep] = useState(0);
+    const [lastPeriodDate, setLastPeriodDate] = useState('');
+    const [cycleLength, setCycleLength] = useState('28');
+    const [periodLength, setPeriodLength] = useState('5');
+    const [notificationsEnabled, setNotificationsEnabled] = useState(true);
 
-    const daysInMonth = getDaysInMonth(currentYear, currentMonth);
-    const firstDayOfMonth = getFirstDayOfMonth(currentYear, currentMonth);
-
-    const handlePrevMonth = () => {
-        if (currentMonth === 0) {
-            setCurrentMonth(11);
-            setCurrentYear(currentYear - 1);
+    const handleNext = () => {
+        if (step === 3) {
+            handleFinish();
         } else {
-            setCurrentMonth(currentMonth - 1);
+            setStep(step + 1);
         }
-        setSelectedDate(null);
     };
 
-    const handleNextMonth = () => {
-        if (currentMonth === 11) {
-            setCurrentMonth(0);
-            setCurrentYear(currentYear + 1);
+    const handleBack = () => {
+        if (step > 0) {
+            setStep(step - 1);
         } else {
-            setCurrentMonth(currentMonth + 1);
+            // Optional: Handle back from first step (e.g., exit app or do nothing)
         }
-        setSelectedDate(null);
     };
 
-    const handleContinue = async () => {
-        if (!selectedDate || saving) return;
+    const handleFinish = async () => {
+        try {
+            // Save Cycle Data
+            await saveData({
+                lastPeriodStart: lastPeriodDate,
+                cycleLength: parseInt(cycleLength) || 28,
+                periodLength: parseInt(periodLength) || 5,
+                entries: [],
+            });
 
-        setSaving(true);
+            // Save User Profile Settings
+            await updateProfile({
+                notificationsEnabled,
+            });
 
-        // Save the selected date as last period start
-        const dateISO = formatDateISO(currentYear, currentMonth, selectedDate);
-        await setLastPeriod(dateISO);
-        await completeOnboarding();
+            // Mark Onboarding as Complete
+            await completeOnboarding();
 
-        setSaving(false);
-        router.replace('/(tabs)');
-    };
-
-    // Check if a date is in the future
-    const isFutureDate = (day: number) => {
-        const date = new Date(currentYear, currentMonth, day);
-        return date > today;
-    };
-
-    const renderCalendar = () => {
-        const days = [];
-
-        // Add empty cells for days before the first day of the month
-        for (let i = 0; i < firstDayOfMonth; i++) {
-            days.push(<View key={`empty-${i}`} style={styles.dayCell} />);
+            console.log('Onboarding Saved & Complete');
+            router.replace('/(tabs)');
+        } catch (error) {
+            console.error('Failed to save onboarding data:', error);
         }
+    };
 
-        // Add days
-        for (let day = 1; day <= daysInMonth; day++) {
-            const isSelected = selectedDate === day;
-            const isFuture = isFutureDate(day);
+    const isNextDisabled = () => {
+        if (step === 1 && !lastPeriodDate) return true;
+        if (step === 2 && (!cycleLength || !periodLength)) return true;
+        return false;
+    };
 
-            days.push(
-                <TouchableOpacity
-                    key={day}
-                    style={[
-                        styles.dayCell,
-                        isSelected && { backgroundColor: colors.primary },
-                    ]}
-                    onPress={() => !isFuture && setSelectedDate(day)}
-                    disabled={isFuture}
-                >
-                    <Text style={[
-                        styles.dayText,
-                        { color: isSelected ? '#fff' : isFuture ? colors.textTertiary : colors.text },
-                    ]}>
-                        {day}
+    // --- Steps Components ---
+
+    const WelcomeStep = () => (
+        <View style={styles.stepContainer}>
+            <View style={styles.iconContainer}>
+                <Ionicons name="rose-outline" size={80} color={colors.primary} />
+            </View>
+            <Text style={[styles.title, { color: colors.text }]}>Welcome to Cycle</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                Track your cycle, understand your body, and live in sync with your rhythm.
+            </Text>
+        </View>
+    );
+
+    const CalendarStep = () => (
+        <View style={styles.stepContainer}>
+            <Text style={[styles.title, { color: colors.text }]}>Last Period?</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                Select the first day of your last menstrual cycle.
+            </Text>
+            <View style={[styles.calendarWrapper, { backgroundColor: colors.cardBackground, shadowColor: colors.text }]}>
+                <Calendar
+                    onDayPress={(day: { dateString: React.SetStateAction<string>; }) => setLastPeriodDate(day.dateString)}
+                    markedDates={{
+                        [lastPeriodDate]: {
+                            selected: true,
+                            disableTouchEvent: true,
+                            selectedColor: colors.primary,
+                            selectedTextColor: '#ffffff',
+                        },
+                    }}
+                    theme={{
+                        backgroundColor: colors.cardBackground,
+                        calendarBackground: colors.cardBackground,
+                        textSectionTitleColor: colors.textSecondary,
+                        selectedDayBackgroundColor: colors.primary,
+                        selectedDayTextColor: '#ffffff',
+                        todayTextColor: colors.primary,
+                        dayTextColor: colors.text,
+                        textDisabledColor: colors.textTertiary,
+                        dotColor: colors.primary,
+                        arrowColor: colors.primary,
+                        monthTextColor: colors.text,
+                        indicatorColor: colors.primary,
+                        textDayFontFamily: 'Manrope_400Regular',
+                        textMonthFontFamily: 'Manrope_700Bold',
+                        textDayHeaderFontFamily: 'Manrope_700Bold',
+                        textDayFontSize: 16,
+                        textMonthFontSize: 18,
+                        textDayHeaderFontSize: 14,
+                    }}
+                    style={styles.calendar}
+                />
+            </View>
+        </View>
+    );
+
+    const GoalsStep = () => (
+        <View style={styles.stepContainer}>
+            <Text style={[styles.title, { color: colors.text }]}>Your Cycle</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                Help us predict your next period by entering your average cycle details.
+            </Text>
+
+            <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.text }]}>Average Cycle Length (Days)</Text>
+                <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundTertiary }]}
+                    value={cycleLength}
+                    onChangeText={setCycleLength}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                />
+            </View>
+
+            <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.text }]}>Period Duration (Days)</Text>
+                <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundTertiary }]}
+                    value={periodLength}
+                    onChangeText={setPeriodLength}
+                    keyboardType="number-pad"
+                    maxLength={2}
+                />
+            </View>
+        </View>
+    );
+
+    const NotificationStep = () => (
+        <View style={styles.stepContainer}>
+            <View style={styles.iconContainer}>
+                <Ionicons name="notifications-outline" size={80} color={colors.primary} />
+            </View>
+            <Text style={[styles.title, { color: colors.text }]}>Stay in the Loop</Text>
+            <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+                Get gentle reminders for your period, fertile window, and daily logs.
+            </Text>
+
+            <View style={[styles.settingRow, { backgroundColor: colors.cardBackground, borderColor: colors.border }]}>
+                <View style={styles.settingInfo}>
+                    <Text style={[styles.settingTitle, { color: colors.text }]}>Enable Notifications</Text>
+                    <Text style={[styles.settingDescription, { color: colors.textSecondary }]}>
+                        You can change this later in settings.
                     </Text>
-                </TouchableOpacity>
-            );
-        }
-
-        return days;
-    };
+                </View>
+                <Switch
+                    value={notificationsEnabled}
+                    onValueChange={setNotificationsEnabled}
+                    trackColor={{ false: colors.border, true: colors.primary }}
+                    thumbColor={'#FFFFFF'}
+                />
+            </View>
+        </View>
+    );
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <View style={styles.content}>
-                {/* Header */}
-                <View style={styles.header}>
-                    <View style={[styles.iconContainer, { backgroundColor: colors.primary + '20' }]}>
-                        <Ionicons name="calendar" size={32} color={colors.primary} />
-                    </View>
-                    <Text style={[styles.title, { color: colors.text }]}>
-                        When did your last period start?
-                    </Text>
-                    <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
-                        This helps us calculate your cycle and provide accurate insights. You can always change this later.
-                    </Text>
-                </View>
-
-                {/* Calendar */}
-                <View style={[styles.calendarCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-                    {/* Month Navigation */}
-                    <View style={styles.monthNav}>
-                        <TouchableOpacity onPress={handlePrevMonth} style={styles.navButton}>
-                            <Ionicons name="chevron-back" size={24} color={colors.text} />
-                        </TouchableOpacity>
-                        <Text style={[styles.monthTitle, { color: colors.text }]}>
-                            {MONTHS[currentMonth]} {currentYear}
-                        </Text>
-                        <TouchableOpacity onPress={handleNextMonth} style={styles.navButton}>
-                            <Ionicons name="chevron-forward" size={24} color={colors.text} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {/* Weekday Headers */}
-                    <View style={styles.weekdayRow}>
-                        {WEEKDAYS.map((day) => (
-                            <View key={day} style={styles.weekdayCell}>
-                                <Text style={[styles.weekdayText, { color: colors.textSecondary }]}>
-                                    {day}
-                                </Text>
+            <KeyboardAvoidingView
+                behavior={Platform.OS === "ios" ? "padding" : "height"}
+                style={{ flex: 1 }}
+            >
+                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                    <View style={styles.content}>
+                        {/* Header / Progress */}
+                        <View style={styles.header}>
+                            {step > 0 && (
+                                <TouchableOpacity onPress={handleBack} style={styles.backButton}>
+                                    <Ionicons name="chevron-back" size={24} color={colors.text} />
+                                </TouchableOpacity>
+                            )}
+                            <View style={styles.progressBarBackground}>
+                                <View style={[styles.progressBarFill, { width: `${((step + 1) / 4) * 100}%`, backgroundColor: colors.primary }]} />
                             </View>
-                        ))}
+                            <View style={{ width: 40 }} />{/* Spacer for alignment */}
+                        </View>
+
+                        {/* Step Content */}
+                        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
+                            {step === 0 && <WelcomeStep />}
+                            {step === 1 && <CalendarStep />}
+                            {step === 2 && <GoalsStep />}
+                            {step === 3 && <NotificationStep />}
+                        </ScrollView>
+
+                        {/* Footer */}
+                        <View style={styles.footer}>
+                            <TouchableOpacity
+                                style={[
+                                    styles.button,
+                                    { backgroundColor: colors.primary },
+                                    isNextDisabled() && styles.buttonDisabled
+                                ]}
+                                onPress={handleNext}
+                                disabled={isNextDisabled()}
+                            >
+                                <Text style={styles.buttonText}>
+                                    {step === 0 ? 'Get Started' : step === 3 ? 'Finish' : 'Continue'}
+                                </Text>
+                            </TouchableOpacity>
+                        </View>
                     </View>
-
-                    {/* Days Grid */}
-                    <View style={styles.daysGrid}>
-                        {renderCalendar()}
-                    </View>
-                </View>
-
-                {/* Info Note */}
-                <View style={[styles.infoNote, { backgroundColor: colors.backgroundTertiary }]}>
-                    <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
-                    <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                        Accurate dates help identify patterns in your health.
-                    </Text>
-                </View>
-            </View>
-
-            {/* Bottom Button */}
-            <View style={styles.bottomBar}>
-                <TouchableOpacity
-                    style={[
-                        styles.continueButton,
-                        { backgroundColor: selectedDate ? colors.primary : colors.border },
-                    ]}
-                    onPress={handleContinue}
-                    disabled={!selectedDate || saving}
-                >
-                    {saving ? (
-                        <ActivityIndicator color="#fff" />
-                    ) : (
-                        <>
-                            <Text style={[
-                                styles.continueButtonText,
-                                { color: selectedDate ? '#fff' : colors.textTertiary },
-                            ]}>
-                                Continue
-                            </Text>
-                            <Ionicons
-                                name="arrow-forward"
-                                size={20}
-                                color={selectedDate ? '#fff' : colors.textTertiary}
-                            />
-                        </>
-                    )}
-                </TouchableOpacity>
-            </View>
+                </TouchableWithoutFeedback>
+            </KeyboardAvoidingView>
         </SafeAreaView>
     );
 }
-
-const cellSize = (width - Spacing.lg * 2 - Spacing.md * 2) / 7;
 
 const styles = StyleSheet.create({
     container: {
@@ -223,101 +261,129 @@ const styles = StyleSheet.create({
     },
     content: {
         flex: 1,
-        paddingHorizontal: Spacing.lg,
-        paddingTop: Spacing.xxl,
     },
     header: {
+        flexDirection: 'row',
         alignItems: 'center',
-        marginBottom: Spacing.xl,
+        paddingHorizontal: 24,
+        paddingTop: 20,
+        marginBottom: 20,
+        justifyContent: 'space-between',
+    },
+    backButton: {
+        padding: 4,
+    },
+    progressBarBackground: {
+        flex: 1,
+        height: 6,
+        backgroundColor: '#F0F0F0',
+        borderRadius: 3,
+        marginHorizontal: 20,
+        overflow: 'hidden',
+    },
+    progressBarFill: {
+        height: '100%',
+        borderRadius: 3,
+    },
+    scrollContent: {
+        flexGrow: 1,
+        paddingHorizontal: 24,
+        paddingBottom: 20,
+    },
+    stepContainer: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: 400, // Ensure content is centered vertically comfortably
     },
     iconContainer: {
-        width: 64,
-        height: 64,
-        borderRadius: BorderRadius.full,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: Spacing.lg,
+        marginBottom: 32,
     },
     title: {
-        ...Typography.h2,
+        fontSize: 28,
+        fontFamily: 'Manrope_700Bold',
+        marginBottom: 12,
         textAlign: 'center',
-        marginBottom: Spacing.sm,
     },
     subtitle: {
-        ...Typography.body,
+        fontSize: 16,
+        fontFamily: 'Manrope_400Regular',
         textAlign: 'center',
-        paddingHorizontal: Spacing.lg,
-        lineHeight: 22,
+        lineHeight: 24,
+        marginBottom: 32,
+        paddingHorizontal: 20,
     },
-    calendarCard: {
-        borderRadius: BorderRadius.xl,
+    calendarWrapper: {
+        width: '100%',
+        borderRadius: 16,
+        padding: 10,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.1,
+        shadowRadius: 12,
+        elevation: 5,
+    },
+    calendar: {
+        borderRadius: 12,
+    },
+    inputGroup: {
+        width: '100%',
+        marginBottom: 24,
+    },
+    label: {
+        fontSize: 14,
+        fontFamily: 'Manrope_600SemiBold',
+        marginBottom: 8,
+    },
+    input: {
+        width: '100%',
+        height: 56,
+        borderRadius: 12,
         borderWidth: 1,
-        padding: Spacing.md,
-        marginBottom: Spacing.lg,
+        paddingHorizontal: 16,
+        fontSize: 18,
+        fontFamily: 'Manrope_500Medium',
     },
-    monthNav: {
+    settingRow: {
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        marginBottom: Spacing.md,
-        paddingHorizontal: Spacing.sm,
+        padding: 16,
+        borderRadius: 16,
+        borderWidth: 1,
+        width: '100%',
     },
-    navButton: {
-        padding: Spacing.sm,
-    },
-    monthTitle: {
-        ...Typography.h4,
-    },
-    weekdayRow: {
-        flexDirection: 'row',
-        marginBottom: Spacing.sm,
-    },
-    weekdayCell: {
-        width: cellSize,
-        alignItems: 'center',
-        paddingVertical: Spacing.sm,
-    },
-    weekdayText: {
-        ...Typography.caption,
-        fontWeight: '600',
-    },
-    daysGrid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    dayCell: {
-        width: cellSize,
-        height: cellSize,
-        alignItems: 'center',
-        justifyContent: 'center',
-        borderRadius: BorderRadius.full,
-    },
-    dayText: {
-        ...Typography.body,
-    },
-    infoNote: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        gap: Spacing.sm,
-    },
-    infoText: {
-        ...Typography.bodySm,
+    settingInfo: {
         flex: 1,
+        marginRight: 16,
     },
-    bottomBar: {
-        padding: Spacing.lg,
+    settingTitle: {
+        fontSize: 16,
+        fontFamily: 'Manrope_600SemiBold',
+        marginBottom: 4,
     },
-    continueButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
+    settingDescription: {
+        fontSize: 14,
+        fontFamily: 'Manrope_400Regular',
+    },
+    footer: {
+        padding: 24,
+    },
+    button: {
+        height: 56,
+        borderRadius: 16,
         justifyContent: 'center',
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        gap: Spacing.sm,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.2,
+        shadowRadius: 8,
+        elevation: 5,
     },
-    continueButtonText: {
-        ...Typography.bodyMedium,
+    buttonDisabled: {
+        opacity: 0.5,
+    },
+    buttonText: {
+        color: '#FFFFFF',
+        fontSize: 18,
+        fontFamily: 'Manrope_700Bold',
     },
 });

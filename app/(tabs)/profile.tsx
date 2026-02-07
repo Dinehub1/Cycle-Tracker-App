@@ -12,6 +12,7 @@ import {
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useCycleData, useOnboarding, useUserProfile } from '@/hooks/use-storage';
 
 interface GoalOption {
     id: string;
@@ -49,8 +50,13 @@ export default function ProfileScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const router = useRouter();
+    const { cycleData } = useCycleData();
+    const { profile, updateProfile } = useUserProfile();
+    const { clearData } = useOnboarding();
 
-    const [selectedGoal, setSelectedGoal] = React.useState('track');
+    const handleGoalSelect = async (goalId: string) => {
+        await updateProfile({ goal: goalId as any });
+    };
 
     return (
         <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
@@ -61,12 +67,12 @@ export default function ProfileScreen() {
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
                     <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                        <Text style={styles.avatarText}>SJ</Text>
+                        <Text style={styles.avatarText}>{profile.name ? profile.name.charAt(0).toUpperCase() : 'S'}</Text>
                     </View>
                     <View style={styles.profileInfo}>
-                        <Text style={[styles.profileName, { color: colors.text }]}>Sarah Jenkins</Text>
+                        <Text style={[styles.profileName, { color: colors.text }]}>{profile.name || 'Guest User'}</Text>
                         <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
-                            sarah.j@glow-app.com
+                            {profile.name ? `${profile.name.toLowerCase().replace(' ', '.')}@glow-app.com` : 'guest@glow-app.com'}
                         </Text>
                     </View>
                     <TouchableOpacity style={[styles.editButton, { borderColor: colors.border }]}>
@@ -89,20 +95,20 @@ export default function ProfileScreen() {
                                     styles.goalCard,
                                     {
                                         backgroundColor: colors.cardBackground,
-                                        borderColor: selectedGoal === goal.id ? colors.primary : colors.cardBorder,
-                                        borderWidth: selectedGoal === goal.id ? 2 : 1,
+                                        borderColor: profile.goal === goal.id ? colors.primary : colors.cardBorder,
+                                        borderWidth: profile.goal === goal.id ? 2 : 1,
                                     }
                                 ]}
-                                onPress={() => setSelectedGoal(goal.id)}
+                                onPress={() => handleGoalSelect(goal.id)}
                             >
                                 <View style={[
                                     styles.goalIcon,
-                                    { backgroundColor: selectedGoal === goal.id ? colors.primary + '20' : colors.backgroundSecondary }
+                                    { backgroundColor: profile.goal === goal.id ? colors.primary + '20' : colors.backgroundSecondary }
                                 ]}>
                                     <Ionicons
                                         name={goal.icon}
                                         size={24}
-                                        color={selectedGoal === goal.id ? colors.primary : colors.textSecondary}
+                                        color={profile.goal === goal.id ? colors.primary : colors.textSecondary}
                                     />
                                 </View>
                                 <View style={styles.goalContent}>
@@ -114,11 +120,11 @@ export default function ProfileScreen() {
                                 <View style={[
                                     styles.goalRadio,
                                     {
-                                        borderColor: selectedGoal === goal.id ? colors.primary : colors.border,
-                                        backgroundColor: selectedGoal === goal.id ? colors.primary : 'transparent',
+                                        borderColor: profile.goal === goal.id ? colors.primary : colors.border,
+                                        backgroundColor: profile.goal === goal.id ? colors.primary : 'transparent',
                                     }
                                 ]}>
-                                    {selectedGoal === goal.id && (
+                                    {profile.goal === goal.id && (
                                         <Ionicons name="checkmark" size={14} color="#fff" />
                                     )}
                                 </View>
@@ -137,7 +143,7 @@ export default function ProfileScreen() {
                                 <Ionicons name="calendar-outline" size={20} color={colors.primary} />
                                 <Text style={[styles.detailLabel, { color: colors.text }]}>Average Cycle</Text>
                             </View>
-                            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>28 days</Text>
+                            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{cycleData.cycleLength} days</Text>
                         </View>
 
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -147,7 +153,7 @@ export default function ProfileScreen() {
                                 <Ionicons name="water-outline" size={20} color={colors.primary} />
                                 <Text style={[styles.detailLabel, { color: colors.text }]}>Period Length</Text>
                             </View>
-                            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>5 days</Text>
+                            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{cycleData.periodLength} days</Text>
                         </View>
 
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
@@ -157,7 +163,7 @@ export default function ProfileScreen() {
                                 <Ionicons name="pulse-outline" size={20} color={colors.primary} />
                                 <Text style={[styles.detailLabel, { color: colors.text }]}>Luteal Phase</Text>
                             </View>
-                            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>14 days</Text>
+                            <Text style={[styles.detailValue, { color: colors.textSecondary }]}>~14 days</Text>
                         </View>
                     </View>
                 </View>
@@ -187,9 +193,27 @@ export default function ProfileScreen() {
                 </View>
 
                 {/* Logout Button */}
-                <TouchableOpacity style={[styles.logoutButton, { borderColor: colors.error }]}>
+                {/* Logout Button */}
+                <TouchableOpacity
+                    style={[styles.logoutButton, { borderColor: colors.error }]}
+                    onPress={() => router.replace('/onboarding')}
+                >
                     <Ionicons name="log-out-outline" size={20} color={colors.error} />
                     <Text style={[styles.logoutText, { color: colors.error }]}>Log Out</Text>
+                </TouchableOpacity>
+
+                {/* Delete Data Button */}
+                <TouchableOpacity
+                    style={[styles.logoutButton, { borderColor: colors.error, marginTop: Spacing.sm, borderStyle: 'dashed' }]}
+                    onPress={async () => {
+                        const success = await clearData();
+                        if (success) {
+                            router.replace('/onboarding');
+                        }
+                    }}
+                >
+                    <Ionicons name="trash-outline" size={20} color={colors.error} />
+                    <Text style={[styles.logoutText, { color: colors.error }]}>Delete All Data</Text>
                 </TouchableOpacity>
             </ScrollView>
         </SafeAreaView>

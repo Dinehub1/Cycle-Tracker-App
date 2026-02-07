@@ -53,12 +53,12 @@ export interface CycleData {
 }
 
 // User goals
-export type GoalType = 'track_period' | 'fertility' | 'health' | 'pregnancy';
+export type GoalType = 'track' | 'pregnant' | 'pregnancy';
 
 // User profile and settings
 export interface UserProfile {
     name: string;
-    goals: GoalType[];
+    goal: GoalType; // Changed from goals[] to single goal
     pinEnabled: boolean;
     biometricEnabled: boolean;
     notificationsEnabled: boolean;
@@ -76,7 +76,7 @@ export const DEFAULT_CYCLE_DATA: CycleData = {
 
 export const DEFAULT_USER_PROFILE: UserProfile = {
     name: '',
-    goals: [],
+    goal: 'track',
     pinEnabled: false,
     biometricEnabled: false,
     notificationsEnabled: true,

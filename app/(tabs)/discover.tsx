@@ -1,316 +1,198 @@
 import { Ionicons } from '@expo/vector-icons';
-import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import {
-    Dimensions,
+    FlatList,
+    Image,
     SafeAreaView,
-    ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
-    View
+    View,
 } from 'react-native';
 
-import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
-
-const { width } = Dimensions.get('window');
-
-const featuredArticles = [
+const ARTICLES = [
     {
-        id: 1,
-        title: 'Mastering Your Luteal Phase Nutrition',
-        readTime: '5 min read',
-        color: '#8b5cf6',
-    },
-    {
-        id: 2,
-        title: 'Cycle-Syncing Your Daily Workouts',
-        readTime: '4 min read',
-        color: '#ec4899',
-    },
-];
-
-const latestInsights = [
-    {
-        id: 1,
-        title: '5 Hydration Habits to Reduce Period Bloating',
-        icon: 'water-outline',
-        category: 'Wellness',
-    },
-    {
-        id: 2,
-        title: "The Science of PMS: What's Actually Happening?",
-        icon: 'flask-outline',
+        id: '1',
+        title: 'Understanding Your Cycle Phases',
+        duration: '5 min read',
         category: 'Education',
+        image: 'https://images.unsplash.com/photo-1516549655169-df83a092dd14?auto=format&fit=crop&q=80&w=300',
     },
     {
-        id: 3,
-        title: 'Managing Anxiety Fluctuations Throughout Your Cycle',
-        icon: 'heart-outline',
-        category: 'Mental Health',
+        id: '2',
+        title: 'Foods to Boost Energy During Your Period',
+        duration: '3 min read',
+        category: 'Nutrition',
+        image: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061?auto=format&fit=crop&q=80&w=300',
     },
     {
-        id: 4,
-        title: 'Low Impact Exercise Ideas for Flow Days',
-        icon: 'fitness-outline',
+        id: '3',
+        title: 'Yoga Poses for Cramp Relief',
+        duration: '7 min read',
         category: 'Fitness',
+        image: 'https://images.unsplash.com/photo-1544367563-121955bf558b?auto=format&fit=crop&q=80&w=300',
+    },
+    {
+        id: '4',
+        title: 'Sleep and Hormones: The Link',
+        duration: '4 min read',
+        category: 'Health',
+        image: 'https://images.unsplash.com/photo-1541781777-c186d97cabe7?auto=format&fit=crop&q=80&w=300',
     },
 ];
 
-const categories = [
-    { id: 1, name: 'All', icon: 'grid-outline' },
-    { id: 2, name: 'Nutrition', icon: 'nutrition-outline' },
-    { id: 3, name: 'Fitness', icon: 'fitness-outline' },
-    { id: 4, name: 'Wellness', icon: 'leaf-outline' },
-    { id: 5, name: 'Education', icon: 'school-outline' },
-];
+const DiscoverScreen = () => {
 
-export default function DiscoverScreen() {
-    const colorScheme = useColorScheme();
-    const colors = Colors[colorScheme ?? 'light'];
+    const renderItem = ({ item }: { item: typeof ARTICLES[0] }) => (
+        <TouchableOpacity style={styles.card}>
+            <Image source={{ uri: item.image }} style={styles.thumbnail} />
+            <View style={styles.cardContent}>
+                <View style={styles.tagContainer}>
+                    <Text style={styles.categoryText}>{item.category}</Text>
+                </View>
+                <Text style={styles.cardTitle} numberOfLines={2}>{item.title}</Text>
+                <View style={styles.metaContainer}>
+                    <View style={styles.durationTag}>
+                        <Ionicons name="time-outline" size={12} color="#ec135b" style={{ marginRight: 4 }} />
+                        <Text style={styles.durationText}>{item.duration}</Text>
+                    </View>
+                </View>
+            </View>
+        </TouchableOpacity>
+    );
 
     return (
-        <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]}>
-            <ScrollView
-                showsVerticalScrollIndicator={false}
-                contentContainerStyle={styles.scrollContent}
-            >
-                {/* Search Bar */}
-                <TouchableOpacity
-                    style={[styles.searchBar, { backgroundColor: colors.backgroundSecondary }]}
-                >
-                    <Ionicons name="search-outline" size={20} color={colors.textSecondary} />
-                    <Text style={[styles.searchPlaceholder, { color: colors.textTertiary }]}>
-                        Search articles...
-                    </Text>
+        <SafeAreaView style={styles.container}>
+            <View style={styles.header}>
+                <Text style={styles.headerTitle}>Discover</Text>
+                <TouchableOpacity style={styles.profileButton}>
+                    <Ionicons name="person-circle-outline" size={32} color="#111827" />
                 </TouchableOpacity>
+            </View>
 
-                {/* Categories */}
-                <ScrollView
-                    horizontal
-                    showsHorizontalScrollIndicator={false}
-                    style={styles.categoriesScroll}
-                    contentContainerStyle={styles.categoriesContent}
-                >
-                    {categories.map((category, index) => (
-                        <TouchableOpacity
-                            key={category.id}
-                            style={[
-                                styles.categoryChip,
-                                {
-                                    backgroundColor: index === 0 ? colors.primary : colors.backgroundSecondary,
-                                },
-                            ]}
-                        >
-                            <Ionicons
-                                name={category.icon as any}
-                                size={16}
-                                color={index === 0 ? '#fff' : colors.textSecondary}
-                            />
-                            <Text style={[
-                                styles.categoryText,
-                                { color: index === 0 ? '#fff' : colors.textSecondary }
-                            ]}>
-                                {category.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+            <View style={styles.searchContainer}>
+                <Ionicons name="search-outline" size={20} color="#9ca3af" style={styles.searchIcon} />
+                <TextInput
+                    placeholder="Search articles..."
+                    style={styles.searchInput}
+                    placeholderTextColor="#9ca3af"
+                />
+            </View>
 
-                {/* Featured Section */}
-                <View style={styles.section}>
-                    <Text style={[styles.sectionTitle, { color: colors.text }]}>Featured</Text>
-                    <ScrollView
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.featuredScroll}
-                    >
-                        {featuredArticles.map((article) => (
-                            <TouchableOpacity
-                                key={article.id}
-                                style={styles.featuredCard}
-                                activeOpacity={0.9}
-                            >
-                                <LinearGradient
-                                    colors={[article.color, article.color + 'cc']}
-                                    start={{ x: 0, y: 0 }}
-                                    end={{ x: 1, y: 1 }}
-                                    style={styles.featuredGradient}
-                                >
-                                    <View style={styles.featuredContent}>
-                                        <View style={styles.featuredBadge}>
-                                            <Ionicons name="bookmark" size={16} color="#fff" />
-                                        </View>
-                                        <View style={styles.featuredTextContainer}>
-                                            <Text style={styles.featuredTitle}>{article.title}</Text>
-                                            <View style={styles.featuredMeta}>
-                                                <Ionicons name="book-outline" size={14} color="rgba(255,255,255,0.8)" />
-                                                <Text style={styles.featuredReadTime}>{article.readTime}</Text>
-                                            </View>
-                                        </View>
-                                    </View>
-                                </LinearGradient>
-                            </TouchableOpacity>
-                        ))}
-                    </ScrollView>
-                </View>
-
-                {/* Latest Insights */}
-                <View style={styles.section}>
-                    <View style={styles.sectionHeader}>
-                        <Text style={[styles.sectionTitle, { color: colors.text }]}>Latest Insights</Text>
-                        <TouchableOpacity>
-                            <Ionicons name="arrow-forward" size={20} color={colors.primary} />
-                        </TouchableOpacity>
-                    </View>
-
-                    {latestInsights.map((insight) => (
-                        <TouchableOpacity
-                            key={insight.id}
-                            style={[styles.insightCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
-                        >
-                            <View style={[styles.insightIcon, { backgroundColor: colors.backgroundTertiary }]}>
-                                <Ionicons name={insight.icon as any} size={24} color={colors.primary} />
-                            </View>
-                            <View style={styles.insightContent}>
-                                <Text style={[styles.insightCategory, { color: colors.primary }]}>
-                                    {insight.category}
-                                </Text>
-                                <Text style={[styles.insightTitle, { color: colors.text }]} numberOfLines={2}>
-                                    {insight.title}
-                                </Text>
-                            </View>
-                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
-                        </TouchableOpacity>
-                    ))}
-                </View>
-            </ScrollView>
+            <FlatList
+                data={ARTICLES}
+                renderItem={renderItem}
+                keyExtractor={(item) => item.id}
+                contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
+            />
         </SafeAreaView>
     );
-}
+};
 
 const styles = StyleSheet.create({
     container: {
         flex: 1,
+        backgroundColor: '#ffffff',
     },
-    scrollContent: {
-        paddingBottom: Spacing.xxl,
+    header: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        paddingHorizontal: 20,
+        paddingVertical: 16,
     },
-    searchBar: {
+    headerTitle: {
+        fontSize: 28,
+        fontFamily: 'Manrope_700Bold',
+        color: '#111827',
+    },
+    profileButton: {
+        //
+    },
+    searchContainer: {
         flexDirection: 'row',
         alignItems: 'center',
-        marginHorizontal: Spacing.lg,
-        marginTop: Spacing.md,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        gap: Spacing.sm,
+        backgroundColor: '#f3f4f6',
+        marginHorizontal: 20,
+        paddingHorizontal: 16,
+        height: 48,
+        borderRadius: 12,
+        marginBottom: 20,
     },
-    searchPlaceholder: {
-        ...Typography.body,
+    searchIcon: {
+        marginRight: 12,
     },
-    categoriesScroll: {
-        marginTop: Spacing.lg,
+    searchInput: {
+        flex: 1,
+        fontFamily: 'Manrope_400Regular',
+        fontSize: 16,
+        color: '#111827',
     },
-    categoriesContent: {
-        paddingHorizontal: Spacing.lg,
-        gap: Spacing.sm,
+    listContent: {
+        paddingHorizontal: 20,
+        paddingBottom: 20,
     },
-    categoryChip: {
+    card: {
         flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: Spacing.md,
-        paddingVertical: Spacing.sm,
-        borderRadius: BorderRadius.full,
-        gap: Spacing.xs,
-        marginRight: Spacing.sm,
+        backgroundColor: '#ffffff',
+        borderRadius: 16,
+        padding: 12,
+        marginBottom: 16,
+        borderWidth: 1,
+        borderColor: '#f3f4f6',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.03,
+        shadowRadius: 8,
+        elevation: 2,
+    },
+    thumbnail: {
+        width: 80,
+        height: 80,
+        borderRadius: 12,
+        backgroundColor: '#f3f4f6',
+    },
+    cardContent: {
+        flex: 1,
+        marginLeft: 16,
+        justifyContent: 'center',
+    },
+    tagContainer: {
+        marginBottom: 6,
     },
     categoryText: {
-        ...Typography.label,
+        fontSize: 12,
+        fontFamily: 'Manrope_600SemiBold',
+        color: '#6b7280',
+        textTransform: 'uppercase',
     },
-    section: {
-        marginTop: Spacing.xl,
+    cardTitle: {
+        fontSize: 16,
+        fontFamily: 'Manrope_700Bold',
+        color: '#111827',
+        marginBottom: 8,
+        lineHeight: 22,
     },
-    sectionHeader: {
+    metaContainer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.md,
     },
-    sectionTitle: {
-        ...Typography.h3,
-        paddingHorizontal: Spacing.lg,
-        marginBottom: Spacing.md,
-    },
-    featuredScroll: {
-        paddingHorizontal: Spacing.lg,
-        gap: Spacing.md,
-    },
-    featuredCard: {
-        width: width * 0.75,
-        height: 180,
-        borderRadius: BorderRadius.xl,
-        overflow: 'hidden',
-        marginRight: Spacing.md,
-    },
-    featuredGradient: {
-        flex: 1,
-        padding: Spacing.lg,
-    },
-    featuredContent: {
-        flex: 1,
-        justifyContent: 'space-between',
-    },
-    featuredBadge: {
+    durationTag: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        backgroundColor: '#fdf2f4',
+        paddingHorizontal: 8,
+        paddingVertical: 4,
+        borderRadius: 6,
         alignSelf: 'flex-start',
-        backgroundColor: 'rgba(255,255,255,0.2)',
-        padding: Spacing.sm,
-        borderRadius: BorderRadius.md,
     },
-    featuredTextContainer: {
-        gap: Spacing.sm,
-    },
-    featuredTitle: {
-        ...Typography.h3,
-        color: '#fff',
-    },
-    featuredMeta: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.xs,
-    },
-    featuredReadTime: {
-        ...Typography.caption,
-        color: 'rgba(255,255,255,0.8)',
-    },
-    insightCard: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        marginHorizontal: Spacing.lg,
-        padding: Spacing.md,
-        borderRadius: BorderRadius.lg,
-        borderWidth: 1,
-        marginBottom: Spacing.sm,
-    },
-    insightIcon: {
-        width: 48,
-        height: 48,
-        borderRadius: BorderRadius.md,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: Spacing.md,
-    },
-    insightContent: {
-        flex: 1,
-    },
-    insightCategory: {
-        ...Typography.caption,
-        fontWeight: '600',
-        marginBottom: Spacing.xs,
-    },
-    insightTitle: {
-        ...Typography.bodyMedium,
+    durationText: {
+        fontSize: 12,
+        fontFamily: 'Manrope_600SemiBold',
+        color: '#ec135b',
     },
 });
+
+export default DiscoverScreen;

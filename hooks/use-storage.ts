@@ -1,5 +1,6 @@
 import {
     addCycleEntry,
+    clearAllData,
     getCycleData,
     getEntryByDate,
     getUserProfile,
@@ -185,10 +186,19 @@ export function useOnboarding() {
         return success;
     }, []);
 
+    const clearData = useCallback(async () => {
+        const success = await clearAllData();
+        if (success) {
+            setIsComplete(false);
+        }
+        return success;
+    }, []);
+
     return {
         isComplete,
         loading,
         completeOnboarding,
+        clearData,
     };
 }
 
