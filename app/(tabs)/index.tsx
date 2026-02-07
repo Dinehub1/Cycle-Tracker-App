@@ -1,98 +1,398 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useFocusEffect } from '@react-navigation/native';
+import { useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import {
+  ActivityIndicator,
+  RefreshControl,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useCycleData } from '@/hooks/use-storage';
+import { CyclePhase } from '@/types';
 
-export default function HomeScreen() {
+const phaseInfo: Record<CyclePhase, { label: string; color: (colors: any) => string; description: string }> = {
+  period: {
+    label: 'Period Phase',
+    color: (c) => c.period,
+    description: 'Your body is shedding the uterine lining.',
+  },
+  follicular: {
+    label: 'Follicular Phase',
+    color: (c) => c.primary,
+    description: 'Your energy levels are rising. Great time for new projects!',
+  },
+  ovulation: {
+    label: 'Ovulation Phase',
+    color: (c) => c.ovulation,
+    description: 'Peak fertility window. You may feel more confident and social.',
+  },
+  luteal: {
+    label: 'Luteal Phase',
+    color: (c) => c.luteal,
+    description: 'Time to slow down. Focus on self-care and rest.',
+  },
+};
+
+export default function TodayScreen() {
+  const colorScheme = useColorScheme();
+  const colors = Colors[colorScheme ?? 'light'];
+  const router = useRouter();
+
+  const { cycleData, cycleStatus, loading, refresh } = useCycleData();
+  const [refreshing, setRefreshing] = useState(false);
+
+  // Refresh data when screen comes into focus
+  useFocusEffect(
+    useCallback(() => {
+      refresh();
+    }, [refresh])
+  );
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await refresh();
+    setRefreshing(false);
+  }, [refresh]);
+
+  if (loading && !refreshing) {
+    return (
+      <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={colors.primary} />
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  const phase = cycleStatus?.phase ?? 'follicular';
+  const currentPhase = phaseInfo[phase];
+  const phaseColor = currentPhase.color(colors);
+
+  const handleLogSymptoms = () => {
+    router.push('/log-symptoms');
+  };
+
+  // Calculate fertility and pregnancy chance based on phase
+  const getFertilityLevel = () => {
+    if (!cycleStatus) return { pregnancy: 'Low', fertility: 'Low' };
+    if (cycleStatus.ovulationDay) return { pregnancy: 'High', fertility: 'Peak' };
+    if (cycleStatus.fertileWindow) return { pregnancy: 'Medium', fertility: 'High' };
+    if (phase === 'period') return { pregnancy: 'Very Low', fertility: 'Low' };
+    return { pregnancy: 'Low', fertility: 'Increasing' };
+  };
+
+  const fertility = getFertilityLevel();
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={[styles.container, { backgroundColor: colors.background }]} edges={['top']}>
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={onRefresh}
+            tintColor={colors.primary}
+            colors={[colors.primary]}
+          />
+        }
+      >
+        {/* Header */}
+        <View style={styles.header}>
+          <View>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>Good morning,</Text>
+            <Text style={[styles.name, { color: colors.text }]}>Sarah</Text>
+          </View>
+          <TouchableOpacity style={[styles.notificationButton, { backgroundColor: colors.backgroundSecondary }]}>
+            <Ionicons name="notifications-outline" size={24} color={colors.text} />
+          </TouchableOpacity>
+        </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+        {/* Cycle Status Card */}
+        <View style={[styles.cycleCard, { backgroundColor: phaseColor }]}>
+          <View style={styles.cycleCardContent}>
+            <View style={styles.cycleDay}>
+              <Text style={styles.cycleDayNumber}>{cycleStatus?.currentDay ?? 1}</Text>
+              <Text style={styles.cycleDayLabel}>Day of Cycle</Text>
+            </View>
+            <View style={styles.cycleDivider} />
+            <View style={styles.periodInfo}>
+              <Text style={styles.periodLabel}>Period in</Text>
+              <Text style={styles.periodDays}>{cycleStatus?.daysUntilPeriod ?? 0} days</Text>
+            </View>
+          </View>
+          <View style={styles.progressBar}>
+            <View
+              style={[
+                styles.progressFill,
+                { width: `${((cycleStatus?.currentDay ?? 1) / (cycleData.cycleLength || 28)) * 100}%` }
+              ]}
+            />
+          </View>
+          <Text style={styles.phaseLabel}>{currentPhase.label}</Text>
+        </View>
+
+        {/* Quick Stats */}
+        <View style={styles.statsRow}>
+          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+            <View style={[styles.statIcon, { backgroundColor: colors.period + '20' }]}>
+              <Ionicons name="heart" size={20} color={colors.period} />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pregnancy</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{fertility.pregnancy} Chance</Text>
+          </View>
+          <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+            <View style={[styles.statIcon, { backgroundColor: colors.fertile + '20' }]}>
+              <Ionicons name="leaf" size={20} color={colors.fertile} />
+            </View>
+            <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Fertility</Text>
+            <Text style={[styles.statValue, { color: colors.text }]}>{fertility.fertility}</Text>
+          </View>
+        </View>
+
+        {/* Daily Insight */}
+        <View style={[styles.insightCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
+          <View style={[styles.insightIcon, { backgroundColor: colors.ovulation + '20' }]}>
+            <Ionicons name="bulb" size={24} color={colors.ovulation} />
+          </View>
+          <View style={styles.insightContent}>
+            <Text style={[styles.insightTitle, { color: colors.text }]}>Daily Insight</Text>
+            <Text style={[styles.insightText, { color: colors.textSecondary }]}>
+              {currentPhase.description}
+            </Text>
+          </View>
+        </View>
+
+        {/* Log Symptoms Button */}
+        <TouchableOpacity
+          style={[styles.logButton, { backgroundColor: colors.primary }]}
+          onPress={handleLogSymptoms}
+        >
+          <Ionicons name="add-circle" size={24} color="#fff" />
+          <Text style={styles.logButtonText}>Log Today's Symptoms</Text>
+        </TouchableOpacity>
+
+        {/* Quick Actions */}
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+        <View style={styles.actionsRow}>
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
+            onPress={handleLogSymptoms}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: colors.period + '20' }]}>
+              <Ionicons name="water" size={24} color={colors.period} />
+            </View>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Log Flow</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
+            onPress={handleLogSymptoms}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: colors.ovulation + '20' }]}>
+              <Ionicons name="happy" size={24} color={colors.ovulation} />
+            </View>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Log Mood</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.actionCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}
+            onPress={handleLogSymptoms}
+          >
+            <View style={[styles.actionIcon, { backgroundColor: colors.info + '20' }]}>
+              <Ionicons name="medical" size={24} color={colors.info} />
+            </View>
+            <Text style={[styles.actionLabel, { color: colors.text }]}>Symptoms</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
+  container: {
+    flex: 1,
+  },
+  loadingContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollContent: {
+    paddingHorizontal: Spacing.lg,
+    paddingBottom: Spacing.xxl,
+  },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  greeting: {
+    ...Typography.body,
+  },
+  name: {
+    ...Typography.h2,
+  },
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  cycleCard: {
+    borderRadius: BorderRadius.xl,
+    padding: Spacing.lg,
+    marginBottom: Spacing.lg,
+  },
+  cycleCardContent: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  cycleDay: {
+    flex: 1,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  cycleDayNumber: {
+    fontSize: 48,
+    fontWeight: '700',
+    color: '#fff',
+  },
+  cycleDayLabel: {
+    ...Typography.body,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  cycleDivider: {
+    width: 1,
+    height: 60,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    marginHorizontal: Spacing.lg,
+  },
+  periodInfo: {
+    alignItems: 'flex-end',
+  },
+  periodLabel: {
+    ...Typography.caption,
+    color: 'rgba(255,255,255,0.8)',
+  },
+  periodDays: {
+    ...Typography.h3,
+    color: '#fff',
+  },
+  progressBar: {
+    height: 6,
+    backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: BorderRadius.full,
+    marginTop: Spacing.lg,
+    marginBottom: Spacing.sm,
+  },
+  progressFill: {
+    height: '100%',
+    backgroundColor: '#fff',
+    borderRadius: BorderRadius.full,
+  },
+  phaseLabel: {
+    ...Typography.caption,
+    color: 'rgba(255,255,255,0.9)',
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+    marginBottom: Spacing.lg,
+  },
+  statCard: {
+    flex: 1,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+  },
+  statIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  statLabel: {
+    ...Typography.caption,
+    marginBottom: Spacing.xs,
+  },
+  statValue: {
+    ...Typography.bodyMedium,
+  },
+  insightCard: {
+    flexDirection: 'row',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    marginBottom: Spacing.lg,
+    gap: Spacing.md,
+  },
+  insightIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.md,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  insightContent: {
+    flex: 1,
+  },
+  insightTitle: {
+    ...Typography.bodyMedium,
+    marginBottom: Spacing.xs,
+  },
+  insightText: {
+    ...Typography.bodySm,
+    lineHeight: 20,
+  },
+  logButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    gap: Spacing.sm,
+    marginBottom: Spacing.xl,
+  },
+  logButtonText: {
+    ...Typography.bodyMedium,
+    color: '#fff',
+  },
+  sectionTitle: {
+    ...Typography.h4,
+    marginBottom: Spacing.md,
+  },
+  actionsRow: {
+    flexDirection: 'row',
+    gap: Spacing.md,
+  },
+  actionCard: {
+    flex: 1,
+    padding: Spacing.md,
+    borderRadius: BorderRadius.lg,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  actionIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: BorderRadius.full,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: Spacing.sm,
+  },
+  actionLabel: {
+    ...Typography.caption,
+    fontWeight: '500',
   },
 });
