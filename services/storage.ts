@@ -1,10 +1,11 @@
 import {
+    AIPrediction,
     CycleData,
     CycleEntry,
     DEFAULT_CYCLE_DATA,
     DEFAULT_USER_PROFILE,
     STORAGE_KEYS,
-    UserProfile,
+    UserProfile
 } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
@@ -84,6 +85,16 @@ export async function setLastPeriodStart(date: string): Promise<boolean> {
     return saveCycleData(data);
 }
 
+// ─── AI Prediction Cache ──────────────────────────────────────────────────────
+
+export async function getAICache(): Promise<AIPrediction | null> {
+    return getItem<AIPrediction>(STORAGE_KEYS.AI_PREDICTION);
+}
+
+export async function setAICache(prediction: AIPrediction): Promise<boolean> {
+    return setItem(STORAGE_KEYS.AI_PREDICTION, prediction);
+}
+
 // ─── User Profile ─────────────────────────────────────────────────────────────
 
 export async function getUserProfile(): Promise<UserProfile> {
@@ -155,6 +166,7 @@ export async function clearAllData(): Promise<boolean> {
             STORAGE_KEYS.USER_PROFILE,
             STORAGE_KEYS.CYCLE_DATA,
             STORAGE_KEYS.ONBOARDING_COMPLETE,
+            STORAGE_KEYS.AI_PREDICTION,
         ];
         await AsyncStorage.multiRemove(asyncKeys);
         await clearPin();

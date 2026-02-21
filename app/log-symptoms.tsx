@@ -55,9 +55,12 @@ const SLEEP_OPTIONS: { id: string; label: string; emoji: string }[] = [
     { id: 'poor', label: 'Poor', emoji: '😫' },
 ];
 
+function getDateISO(date: Date): string {
+    return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
 function getTodayISO(): string {
-    const today = new Date();
-    return `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    return getDateISO(new Date());
 }
 
 function generateId(): string {
@@ -77,9 +80,11 @@ export default function LogSymptomsScreen() {
     const colors = Colors[colorScheme ?? 'light'];
     const router = useRouter();
 
-    const todayISO = getTodayISO();
+    const [selectedDate, setSelectedDate] = useState(new Date());
+    const dateISO = getDateISO(selectedDate);
+    const isToday = dateISO === getTodayISO();
     const { addEntry } = useCycleData();
-    const { entry: existingEntry, loading } = useDayEntry(todayISO);
+    const { entry: existingEntry, loading } = useDayEntry(dateISO);
 
     const [selectedFlow, setSelectedFlow] = useState<FlowLevel | null>(null);
     const [selectedMood, setSelectedMood] = useState<MoodType | null>(null);
@@ -128,7 +133,7 @@ export default function LogSymptomsScreen() {
 
         const entry: CycleEntry = {
             id: existingEntry?.id ?? generateId(),
-            date: todayISO,
+            date: dateISO,
             flow: selectedFlow ?? undefined,
             mood: selectedMood ?? undefined,
             symptoms: symptoms.length > 0 ? symptoms : undefined,
@@ -178,18 +183,46 @@ export default function LogSymptomsScreen() {
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
             >
-                {/* Date Banner */}
+                {/* Date Banner with Navigation */}
                 <View style={[styles.dateBanner, { backgroundColor: colors.primary + '10' }]}>
-                    <View style={[styles.dateBannerIcon, { backgroundColor: colors.primary + '20' }]}>
-                        <Ionicons name="calendar" size={18} color={colors.primary} />
-                    </View>
-                    <View>
-                        <Text style={[styles.dateBannerTitle, { color: colors.text }]}>{getFormattedToday()}</Text>
+                    <TouchableOpacity
+                        style={[styles.dateNavBtn, { backgroundColor: colors.primary + '15' }]}
+                        onPress={() => {
+                            const prev = new Date(selectedDate);
+                            prev.setDate(prev.getDate() - 1);
+                            const maxPast = new Date();
+                            maxPast.setDate(maxPast.getDate() - 90);
+                            if (prev >= maxPast) setSelectedDate(prev);
+                        }}
+                    >
+                        <Ionicons name="chevron-back" size={18} color={colors.primary} />
+                    </TouchableOpacity>
+                    <View style={{ flex: 1, alignItems: 'center' }}>
+                        <Text style={[styles.dateBannerTitle, { color: colors.text }]}>
+                            {selectedDate.toLocaleDateString('en-US', {
+                                weekday: 'long', month: 'long', day: 'numeric',
+                            })}
+                        </Text>
                         <Text style={[styles.dateBannerSub, { color: colors.textSecondary }]}>
                             {existingEntry ? 'Editing existing entry' : 'New entry'}
+                            {isToday ? ' · Today' : ''}
                             {filledSections > 0 && ` · ${filledSections} section${filledSections > 1 ? 's' : ''} filled`}
                         </Text>
                     </View>
+                    <TouchableOpacity
+                        style={[styles.dateNavBtn, {
+                            backgroundColor: isToday ? colors.backgroundSecondary : colors.primary + '15',
+                            opacity: isToday ? 0.4 : 1,
+                        }]}
+                        disabled={isToday}
+                        onPress={() => {
+                            const next = new Date(selectedDate);
+                            next.setDate(next.getDate() + 1);
+                            if (next <= new Date()) setSelectedDate(next);
+                        }}
+                    >
+                        <Ionicons name="chevron-forward" size={18} color={isToday ? colors.textTertiary : colors.primary} />
+                    </TouchableOpacity>
                 </View>
 
                 {/* Flow Section */}
@@ -526,6 +559,13 @@ const styles = StyleSheet.create({
         width: 40,
         height: 40,
         borderRadius: BorderRadius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dateNavBtn: {
+        width: 36,
+        height: 36,
+        borderRadius: BorderRadius.full,
         alignItems: 'center',
         justifyContent: 'center',
     },

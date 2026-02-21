@@ -1,16 +1,19 @@
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import React, { useMemo } from 'react';
 import {
+    ActivityIndicator,
     SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View
 } from 'react-native';
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
+import { useAIPrediction } from '@/hooks/use-ai';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCycleData } from '@/hooks/use-storage';
+import { useCycleData, useUserProfile } from '@/hooks/use-storage';
 import { CyclePhase, MoodType } from '@/types';
 
 const moodEmojis: Record<MoodType, string> = {
@@ -56,10 +59,20 @@ const HealthInsightsScreen = () => {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const { cycleData, cycleStats, cycleStatus } = useCycleData();
+    const { profile } = useUserProfile();
+    const { prediction, loading: aiLoading, error: aiError, refresh: refreshAI } = useAIPrediction(cycleData, profile);
 
     const phase = cycleStatus?.phase ?? 'follicular';
     const currentPhase = phaseConfig[phase];
     const phaseColor = currentPhase.color(colors);
+    const hasEnoughForAI = cycleData.entries.length >= 1 && !!cycleData.lastPeriodStart;
+
+    const formatDate = (dateStr: string) => {
+        try {
+            const d = new Date(dateStr);
+            return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        } catch { return dateStr; }
+    };
 
     // ─── Symptom frequency analysis ──────────────────────────────────
     const symptomAnalysis = useMemo(() => {
@@ -137,6 +150,152 @@ const HealthInsightsScreen = () => {
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.scrollContent}>
+
+                {/* ─── AI Predictions Card ────────────────────────────── */}
+                <View style={[styles.card, {
+                    backgroundColor: colors.cardBackground,
+                    borderColor: colors.cardBorder,
+                    borderWidth: 1,
+                }]}>
+                    <View style={styles.cardHeader}>
+                        <View style={styles.cardHeaderLeft}>
+                            <View style={[styles.cardIcon, { backgroundColor: '#8b5cf620' }]}>
+                                <Ionicons name="sparkles" size={18} color="#8b5cf6" />
+                            </View>
+                            <Text style={[styles.cardTitle, { color: colors.text }]}>AI Predictions</Text>
+                        </View>
+                        {prediction && (
+                            <TouchableOpacity onPress={refreshAI} disabled={aiLoading}>
+                                <Ionicons
+                                    name="refresh-outline"
+                                    size={18}
+                                    color={aiLoading ? colors.textTertiary : colors.primary}
+                                />
+                            </TouchableOpacity>
+                        )}
+                    </View>
+
+                    {!hasEnoughForAI ? (
+                        <View style={styles.emptySection}>
+                            <Ionicons name="sparkles-outline" size={32} color={colors.textTertiary} />
+                            <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
+                                Log at least 1 entry with period data{'\n'}to unlock AI predictions
+                            </Text>
+                        </View>
+                    ) : aiLoading && !prediction ? (
+                        <View style={styles.aiLoadingContainer}>
+                            <ActivityIndicator size="small" color={colors.primary} />
+                            <Text style={[styles.aiLoadingText, { color: colors.textSecondary }]}>
+                                Analyzing your cycle data...
+                            </Text>
+                        </View>
+                    ) : prediction ? (
+                        <View style={styles.aiContent}>
+                            {/* Confidence Badge */}
+                            <View style={[styles.confidenceBadge, {
+                                backgroundColor: prediction.confidence >= 70 ? colors.success + '15'
+                                    : prediction.confidence >= 40 ? colors.warning + '15'
+                                        : colors.textSecondary + '15',
+                            }]}>
+                                <Ionicons
+                                    name="shield-checkmark"
+                                    size={12}
+                                    color={prediction.confidence >= 70 ? colors.success
+                                        : prediction.confidence >= 40 ? colors.warning
+                                            : colors.textSecondary}
+                                />
+                                <Text style={[styles.confidenceText, {
+                                    color: prediction.confidence >= 70 ? colors.success
+                                        : prediction.confidence >= 40 ? colors.warning
+                                            : colors.textSecondary,
+                                }]}>
+                                    {prediction.confidence}% confidence
+                                </Text>
+                            </View>
+
+                            {/* Prediction Stats */}
+                            <View style={styles.aiStatsRow}>
+                                <View style={[styles.aiStatBox, { backgroundColor: colors.period + '10' }]}>
+                                    <Ionicons name="calendar" size={16} color={colors.period} />
+                                    <Text style={[styles.aiStatValue, { color: colors.text }]}>
+                                        {formatDate(prediction.nextPeriodDate)}
+                                    </Text>
+                                    <Text style={[styles.aiStatLabel, { color: colors.textSecondary }]}>
+                                        Next Period
+                                    </Text>
+                                </View>
+                                <View style={[styles.aiStatBox, { backgroundColor: colors.primary + '10' }]}>
+                                    <Ionicons name="sync" size={16} color={colors.primary} />
+                                    <Text style={[styles.aiStatValue, { color: colors.text }]}>
+                                        {prediction.predictedCycleLength}d
+                                    </Text>
+                                    <Text style={[styles.aiStatLabel, { color: colors.textSecondary }]}>
+                                        Cycle Length
+                                    </Text>
+                                </View>
+                                <View style={[styles.aiStatBox, { backgroundColor: colors.fertile + '10' }]}>
+                                    <Ionicons name="leaf" size={16} color={colors.fertile} />
+                                    <Text style={[styles.aiStatValue, { color: colors.text }]}>
+                                        {formatDate(prediction.fertileWindowStart)}
+                                    </Text>
+                                    <Text style={[styles.aiStatLabel, { color: colors.textSecondary }]}>
+                                        Fertile Start
+                                    </Text>
+                                </View>
+                            </View>
+
+                            {/* AI Insights */}
+                            {prediction.insights.length > 0 && (
+                                <View style={styles.aiInsightsList}>
+                                    <Text style={[styles.aiSubTitle, { color: colors.text }]}>
+                                        Pattern Insights
+                                    </Text>
+                                    {prediction.insights.map((insight, i) => (
+                                        <View key={i} style={styles.aiInsightRow}>
+                                            <View style={[styles.aiInsightDot, { backgroundColor: colors.primary }]} />
+                                            <Text style={[styles.aiInsightText, { color: colors.textSecondary }]}>
+                                                {insight}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+
+                            {/* AI Tips */}
+                            {prediction.tips.length > 0 && (
+                                <View style={styles.aiInsightsList}>
+                                    <Text style={[styles.aiSubTitle, { color: colors.text }]}>
+                                        Personalized Tips
+                                    </Text>
+                                    {prediction.tips.map((tip, i) => (
+                                        <View key={i} style={styles.aiInsightRow}>
+                                            <Text style={styles.aiTipEmoji}>💡</Text>
+                                            <Text style={[styles.aiInsightText, { color: colors.textSecondary }]}>
+                                                {tip}
+                                            </Text>
+                                        </View>
+                                    ))}
+                                </View>
+                            )}
+
+                            {aiLoading && (
+                                <View style={styles.aiRefreshingRow}>
+                                    <ActivityIndicator size="small" color={colors.primary} />
+                                    <Text style={[styles.aiRefreshingText, { color: colors.textTertiary }]}>
+                                        Refreshing...
+                                    </Text>
+                                </View>
+                            )}
+                        </View>
+                    ) : aiError ? (
+                        <View style={styles.emptySection}>
+                            <Ionicons name="cloud-offline-outline" size={32} color={colors.textTertiary} />
+                            <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
+                                Could not load predictions.{'\n'}Pull to refresh to try again.
+                            </Text>
+                        </View>
+                    ) : null}
+                </View>
 
                 {/* ─── Current Phase Card ─────────────────────────────── */}
                 <View style={[styles.phaseCard, { backgroundColor: phaseColor }]}>
@@ -711,6 +870,91 @@ const styles = StyleSheet.create({
         fontFamily: 'Manrope_400Regular',
         lineHeight: 18,
         marginTop: 2,
+    },
+
+    // ─── AI Predictions ─────────────────────────────────────────────
+    aiLoadingContainer: {
+        alignItems: 'center',
+        paddingVertical: Spacing.xl,
+        gap: 10,
+    },
+    aiLoadingText: {
+        fontSize: 13,
+        fontFamily: 'Manrope_500Medium',
+    },
+    aiContent: { gap: 14 },
+    confidenceBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        alignSelf: 'flex-start',
+        gap: 5,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 20,
+    },
+    confidenceText: {
+        fontSize: 11,
+        fontFamily: 'Manrope_600SemiBold',
+    },
+    aiStatsRow: {
+        flexDirection: 'row',
+        gap: 8,
+    },
+    aiStatBox: {
+        flex: 1,
+        alignItems: 'center',
+        paddingVertical: 10,
+        paddingHorizontal: 6,
+        borderRadius: BorderRadius.lg,
+        gap: 4,
+    },
+    aiStatValue: {
+        fontSize: 14,
+        fontFamily: 'Manrope_700Bold',
+    },
+    aiStatLabel: {
+        fontSize: 10,
+        fontFamily: 'Manrope_500Medium',
+        textAlign: 'center',
+    },
+    aiSubTitle: {
+        fontSize: 13,
+        fontFamily: 'Manrope_700Bold',
+        marginBottom: 6,
+    },
+    aiInsightsList: { gap: 4 },
+    aiInsightRow: {
+        flexDirection: 'row',
+        alignItems: 'flex-start',
+        gap: 8,
+        paddingVertical: 2,
+    },
+    aiInsightDot: {
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        marginTop: 6,
+    },
+    aiInsightText: {
+        fontSize: 13,
+        fontFamily: 'Manrope_400Regular',
+        lineHeight: 18,
+        flex: 1,
+    },
+    aiTipEmoji: {
+        fontSize: 14,
+        marginTop: 1,
+    },
+    aiRefreshingRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: 8,
+        paddingTop: 4,
+    },
+    aiRefreshingText: {
+        fontSize: 11,
+        fontFamily: 'Manrope_500Medium',
     },
 });
 

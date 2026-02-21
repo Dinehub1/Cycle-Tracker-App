@@ -3,6 +3,7 @@ export const STORAGE_KEYS = {
     USER_PROFILE: '@cycle_tracker/user_profile',
     CYCLE_DATA: '@cycle_tracker/cycle_data',
     ONBOARDING_COMPLETE: '@cycle_tracker/onboarding_complete',
+    AI_PREDICTION: '@cycle_tracker/ai_prediction',
     PIN: 'cycle_tracker_pin', // SecureStore: only use alphanumeric + underscores
 } as const;
 
@@ -104,4 +105,17 @@ export interface CycleStats {
     shortestCycle: number;
     longestCycle: number;
     totalEntries: number;
+}
+
+// AI Prediction response
+export interface AIPrediction {
+    nextPeriodDate: string;
+    predictedCycleLength: number;
+    fertileWindowStart: string;
+    fertileWindowEnd: string;
+    insights: string[];
+    tips: string[];
+    confidence: number; // 0-100
+    generatedAt: string; // ISO timestamp
+    dataHash: string; // Hash of input data to detect changes
 }

@@ -14,6 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
+import { useAIPrediction } from '@/hooks/use-ai';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { getPregnancyWeek, useCycleData, useUserProfile } from '@/hooks/use-storage';
 import { CyclePhase } from '@/types';
@@ -48,6 +49,7 @@ export default function TodayScreen() {
 
   const { cycleData, cycleStatus, loading, refresh: refreshCycle } = useCycleData();
   const { profile, refresh: refreshProfile } = useUserProfile();
+  const { prediction: aiPrediction } = useAIPrediction(cycleData, profile);
   const [refreshing, setRefreshing] = useState(false);
 
   // Refresh data when screen comes into focus
@@ -210,16 +212,26 @@ export default function TodayScreen() {
           </View>
         )}
 
-        {/* Daily Insight */}
+        {/* Daily Insight — AI-powered when available */}
         <View style={[styles.insightCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
-          <View style={[styles.insightIcon, { backgroundColor: colors.ovulation + '20' }]}>
-            <Ionicons name={isTTC ? "heart-circle" : "bulb"} size={24} color={colors.ovulation} />
+          <View style={[styles.insightIcon, { backgroundColor: aiPrediction ? '#8b5cf620' : colors.ovulation + '20' }]}>
+            <Ionicons name={aiPrediction ? 'sparkles' : isTTC ? 'heart-circle' : 'bulb'} size={24} color={aiPrediction ? '#8b5cf6' : colors.ovulation} />
           </View>
           <View style={styles.insightContent}>
-            <Text style={[styles.insightTitle, { color: colors.text }]}>{isTTC ? 'TTC Tip of the Day' : 'Daily Insight'}</Text>
-            <Text style={[styles.insightText, { color: colors.textSecondary }]}>
-              {getDailyInsight()}
+            <Text style={[styles.insightTitle, { color: colors.text }]}>
+              {aiPrediction ? '✨ AI Insight' : isTTC ? 'TTC Tip of the Day' : 'Daily Insight'}
             </Text>
+            <Text style={[styles.insightText, { color: colors.textSecondary }]}>
+              {aiPrediction && aiPrediction.tips.length > 0
+                ? aiPrediction.tips[0]
+                : getDailyInsight()}
+            </Text>
+            {aiPrediction && (
+              <Text style={[styles.insightText, { color: colors.primary, marginTop: 4, fontSize: 12 }]}>
+                Next period: {new Date(aiPrediction.nextPeriodDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                {' · '}{aiPrediction.confidence}% confidence
+              </Text>
+            )}
           </View>
         </View>
 
