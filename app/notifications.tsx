@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     SafeAreaView,
     ScrollView,
@@ -13,6 +13,7 @@ import {
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useUserProfile } from '@/hooks/use-storage';
 
 interface ReminderSetting {
     id: string;
@@ -21,9 +22,12 @@ interface ReminderSetting {
     enabled: boolean;
 }
 
+const REMINDER_STORAGE_KEY = '@cycle_tracker/reminder_settings';
+
 export default function NotificationsScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
+    const { profile, updateProfile } = useUserProfile();
 
     const [cycleReminders, setCycleReminders] = useState<ReminderSetting[]>([
         {
@@ -55,7 +59,12 @@ export default function NotificationsScreen() {
         },
     ]);
 
-    const [reminderTime, setReminderTime] = useState('9:00 AM');
+    const [reminderTime, setReminderTime] = useState(profile.reminderTime || '9:00 AM');
+
+    // Sync notificationsEnabled from profile
+    useEffect(() => {
+        setReminderTime(profile.reminderTime || '9:00 AM');
+    }, [profile.reminderTime]);
 
     const toggleCycleReminder = (id: string) => {
         setCycleReminders(prev =>
@@ -67,6 +76,15 @@ export default function NotificationsScreen() {
         setHealthReminders(prev =>
             prev.map(r => r.id === id ? { ...r, enabled: !r.enabled } : r)
         );
+    };
+
+    const cycleReminderTime = () => {
+        const times = ['7:00 AM', '8:00 AM', '9:00 AM', '10:00 AM', '12:00 PM', '6:00 PM', '8:00 PM'];
+        const currentIndex = times.indexOf(reminderTime);
+        const nextIndex = (currentIndex + 1) % times.length;
+        const newTime = times[nextIndex];
+        setReminderTime(newTime);
+        updateProfile({ reminderTime: newTime });
     };
 
     const ReminderItem = ({
@@ -99,11 +117,13 @@ export default function NotificationsScreen() {
                     title: 'Notifications',
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.primary,
+                    headerBackTitle: 'Back',
                 }}
             />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Cycle Reminders */}
                 <View style={styles.section}>
@@ -140,7 +160,7 @@ export default function NotificationsScreen() {
 
                         <View style={[styles.divider, { backgroundColor: colors.border }]} />
 
-                        <TouchableOpacity style={styles.timePickerRow}>
+                        <TouchableOpacity style={styles.timePickerRow} onPress={cycleReminderTime}>
                             <Text style={[styles.reminderTitle, { color: colors.text }]}>Reminder Time</Text>
                             <View style={styles.timeValue}>
                                 <Text style={[styles.timeText, { color: colors.primary }]}>{reminderTime}</Text>
@@ -154,7 +174,7 @@ export default function NotificationsScreen() {
                 <View style={[styles.infoCard, { backgroundColor: colors.backgroundTertiary }]}>
                     <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
                     <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                        Notifications help you stay on top of your health journey. You can change these settings at any time.
+                        Notifications help you stay on top of your health journey. Tap on Reminder Time to cycle through time options.
                     </Text>
                 </View>
             </ScrollView>

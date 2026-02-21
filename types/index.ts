@@ -3,7 +3,7 @@ export const STORAGE_KEYS = {
     USER_PROFILE: '@cycle_tracker/user_profile',
     CYCLE_DATA: '@cycle_tracker/cycle_data',
     ONBOARDING_COMPLETE: '@cycle_tracker/onboarding_complete',
-    PIN: '@cycle_tracker/pin',
+    PIN: 'cycle_tracker_pin', // SecureStore: only use alphanumeric + underscores
 } as const;
 
 // Flow intensity levels
@@ -40,6 +40,9 @@ export interface CycleEntry {
         duration: number; // minutes
         intensity: 'low' | 'medium' | 'high';
     };
+    // New fields (2025 update)
+    bbt?: number;         // Basal Body Temperature in °C (optional)
+    waterIntake?: number; // Water intake in ml (optional)
     createdAt: string;
     updatedAt: string;
 }
@@ -58,7 +61,7 @@ export type GoalType = 'track' | 'pregnant' | 'pregnancy';
 // User profile and settings
 export interface UserProfile {
     name: string;
-    goal: GoalType; // Changed from goals[] to single goal
+    goal: GoalType; // Single goal (track | pregnant | pregnancy)
     pinEnabled: boolean;
     biometricEnabled: boolean;
     notificationsEnabled: boolean;
@@ -93,4 +96,12 @@ export interface CycleStatus {
     daysUntilPeriod: number;
     fertileWindow: boolean;
     ovulationDay: boolean;
+}
+
+// Cycle statistics computed from all entries
+export interface CycleStats {
+    avgLength: number;
+    shortestCycle: number;
+    longestCycle: number;
+    totalEntries: number;
 }

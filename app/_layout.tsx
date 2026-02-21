@@ -6,15 +6,17 @@ import {
   useFonts,
 } from '@expo-google-fonts/manrope';
 import { DarkTheme, DefaultTheme, ThemeProvider } from '@react-navigation/native';
-import { Stack } from 'expo-router';
+import { Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import 'react-native-reanimated';
 
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useOnboarding, useUserProfile } from '@/hooks/use-storage';
+import { getPin } from '@/services/storage';
 
 // Prevent the splash screen from auto-hiding before asset loading is complete.
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -54,6 +56,14 @@ export const unstable_settings = {
 
 export default function RootLayout() {
   const colorScheme = useColorScheme();
+  const isDark = colorScheme === 'dark';
+  const colors = Colors[isDark ? 'dark' : 'light'];
+  const router = useRouter();
+  const segments = useSegments();
+
+  const { isComplete: onboardingComplete, loading: onboardingLoading } = useOnboarding();
+  const { profile, loading: profileLoading } = useUserProfile();
+  const [pinChecked, setPinChecked] = useState(false);
 
   const [fontsLoaded, fontError] = useFonts({
     Manrope_400Regular,
@@ -72,13 +82,50 @@ export default function RootLayout() {
     onLayoutRootView();
   }, [onLayoutRootView]);
 
-  // Show nothing while loading, but allow error to proceed
+  // Navigation guard: redirect based on onboarding/PIN state
+  useEffect(() => {
+    if (onboardingLoading || profileLoading || (!fontsLoaded && !fontError)) return;
+    // Wait for isComplete to actually load (null = still loading)
+    if (onboardingComplete === null) return;
+
+    const currentSegment = segments[0];
+
+    // If onboarding not complete, redirect there (unless already on it)
+    if (!onboardingComplete && currentSegment !== 'onboarding') {
+      router.replace('/onboarding');
+      return;
+    }
+
+    // If onboarding complete and we're on the onboarding screen, go to tabs
+    if (onboardingComplete && currentSegment === 'onboarding') {
+      // Allow — user is finishing onboarding, handleFinish will navigate them
+      return;
+    }
+
+    // Check PIN lock on first load (not on every segment change)
+    if (onboardingComplete && profile.pinEnabled && !pinChecked && currentSegment !== 'pin-lock') {
+      let isMounted = true;
+      getPin().then(pin => {
+        if (!isMounted) return;
+        if (pin) {
+          router.replace('/pin-lock');
+        }
+        setPinChecked(true);
+      });
+      return () => { isMounted = false; };
+    }
+  }, [onboardingComplete, onboardingLoading, profileLoading, fontsLoaded, fontError, segments, profile.pinEnabled, pinChecked, router]);
+
   if (!fontsLoaded && !fontError) {
     return null;
   }
 
+  // Adaptive header style based on color scheme
+  const headerStyle = { backgroundColor: colors.background };
+  const headerTintColor = colors.primary;
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? CycleTrackerDarkTheme : CycleTrackerLightTheme}>
+    <ThemeProvider value={isDark ? CycleTrackerDarkTheme : CycleTrackerLightTheme}>
       <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
         <Stack>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
@@ -101,37 +148,48 @@ export default function RootLayout() {
             options={{
               title: 'Log Symptoms',
               presentation: 'modal',
-              headerStyle: { backgroundColor: Colors.light.background },
-              headerTintColor: Colors.light.primary,
+              headerStyle,
+              headerTintColor,
+              headerBackTitle: 'Back',
             }}
           />
           <Stack.Screen
             name="notifications"
             options={{
               title: 'Notifications',
-              headerStyle: { backgroundColor: Colors.light.background },
-              headerTintColor: Colors.light.primary,
+              headerStyle,
+              headerTintColor,
+              headerBackTitle: 'Back',
             }}
           />
           <Stack.Screen
             name="privacy"
             options={{
               title: 'Privacy & Security',
-              headerStyle: { backgroundColor: Colors.light.background },
-              headerTintColor: Colors.light.primary,
+              headerStyle,
+              headerTintColor,
+              headerBackTitle: 'Back',
             }}
           />
           <Stack.Screen
             name="partner-sync"
             options={{
               title: 'Partner Sync',
-              headerStyle: { backgroundColor: Colors.light.background },
-              headerTintColor: Colors.light.primary,
+              headerStyle,
+              headerTintColor,
+              headerBackTitle: 'Back',
+            }}
+          />
+          <Stack.Screen
+            name="article"
+            options={{
+              headerShown: false,
+              presentation: 'card',
             }}
           />
         </Stack>
       </View>
-      <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
+      <StatusBar style={isDark ? 'light' : 'dark'} />
     </ThemeProvider>
   );
 }

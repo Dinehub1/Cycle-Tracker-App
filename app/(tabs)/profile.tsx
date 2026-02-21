@@ -1,11 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
+    Alert,
     SafeAreaView,
     ScrollView,
     StyleSheet,
     Text,
+    TextInput,
     TouchableOpacity,
     View
 } from 'react-native';
@@ -19,7 +21,6 @@ interface GoalOption {
     title: string;
     description: string;
     icon: any;
-    selected: boolean;
 }
 
 const goals: GoalOption[] = [
@@ -28,21 +29,18 @@ const goals: GoalOption[] = [
         title: 'Track Cycle',
         description: "Understand your body's rhythm",
         icon: 'sync-outline',
-        selected: true,
     },
     {
         id: 'pregnant',
         title: 'Get Pregnant',
         description: 'Identify your most fertile days',
         icon: 'heart-outline',
-        selected: false,
     },
     {
         id: 'pregnancy',
         title: 'Track Pregnancy',
         description: "Follow your baby's growth",
         icon: 'rose-outline',
-        selected: false,
     },
 ];
 
@@ -54,8 +52,61 @@ export default function ProfileScreen() {
     const { profile, updateProfile } = useUserProfile();
     const { clearData } = useOnboarding();
 
+    const [editingName, setEditingName] = useState(false);
+    const [tempName, setTempName] = useState(profile.name);
+
+    // Sync tempName when profile loads from storage
+    useEffect(() => {
+        if (!editingName) {
+            setTempName(profile.name);
+        }
+    }, [profile.name, editingName]);
+
     const handleGoalSelect = async (goalId: string) => {
         await updateProfile({ goal: goalId as any });
+    };
+
+    const handleEditName = () => {
+        setTempName(profile.name);
+        setEditingName(true);
+    };
+
+    const handleSaveName = async () => {
+        if (tempName.trim()) {
+            await updateProfile({ name: tempName.trim() });
+        }
+        setEditingName(false);
+    };
+
+    const handleLogOut = () => {
+        Alert.alert(
+            'Log Out',
+            'This will return you to the onboarding screen. Your data will be preserved.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Log Out', onPress: () => router.replace('/onboarding') },
+            ]
+        );
+    };
+
+    const handleDeleteData = () => {
+        Alert.alert(
+            'Delete All Data',
+            'This will permanently remove all your cycle data, settings, and profile. This action cannot be undone.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Delete Everything',
+                    style: 'destructive',
+                    onPress: async () => {
+                        const success = await clearData();
+                        if (success) {
+                            router.replace('/onboarding');
+                        }
+                    },
+                },
+            ]
+        );
     };
 
     return (
@@ -67,16 +118,37 @@ export default function ProfileScreen() {
                 {/* Profile Header */}
                 <View style={styles.profileHeader}>
                     <View style={[styles.avatar, { backgroundColor: colors.primary }]}>
-                        <Text style={styles.avatarText}>{profile.name ? profile.name.charAt(0).toUpperCase() : 'S'}</Text>
+                        <Text style={styles.avatarText}>{profile.name ? profile.name.charAt(0).toUpperCase() : 'G'}</Text>
                     </View>
                     <View style={styles.profileInfo}>
-                        <Text style={[styles.profileName, { color: colors.text }]}>{profile.name || 'Guest User'}</Text>
-                        <Text style={[styles.profileEmail, { color: colors.textSecondary }]}>
-                            {profile.name ? `${profile.name.toLowerCase().replace(' ', '.')}@glow-app.com` : 'guest@glow-app.com'}
-                        </Text>
+                        {editingName ? (
+                            <View style={styles.editNameRow}>
+                                <TextInput
+                                    style={[styles.nameInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundSecondary }]}
+                                    value={tempName}
+                                    onChangeText={setTempName}
+                                    autoFocus
+                                    onSubmitEditing={handleSaveName}
+                                    returnKeyType="done"
+                                />
+                                <TouchableOpacity onPress={handleSaveName}>
+                                    <Ionicons name="checkmark-circle" size={28} color={colors.primary} />
+                                </TouchableOpacity>
+                            </View>
+                        ) : (
+                            <>
+                                <Text style={[styles.profileName, { color: colors.text }]}>{profile.name || 'Guest User'}</Text>
+                                <Text style={[styles.profileSubtitle, { color: colors.textSecondary }]}>
+                                    {profile.goal === 'track' ? 'Tracking my cycle' : profile.goal === 'pregnant' ? 'Trying to conceive' : 'Tracking pregnancy'}
+                                </Text>
+                            </>
+                        )}
                     </View>
-                    <TouchableOpacity style={[styles.editButton, { borderColor: colors.border }]}>
-                        <Ionicons name="pencil-outline" size={18} color={colors.primary} />
+                    <TouchableOpacity
+                        style={[styles.editButton, { borderColor: colors.border }]}
+                        onPress={editingName ? handleSaveName : handleEditName}
+                    >
+                        <Ionicons name={editingName ? "checkmark" : "pencil-outline"} size={18} color={colors.primary} />
                     </TouchableOpacity>
                 </View>
 
@@ -176,12 +248,11 @@ export default function ProfileScreen() {
                         { icon: 'notifications-outline', label: 'Notifications', route: '/notifications' },
                         { icon: 'people-outline', label: 'Partner Sync', route: '/partner-sync' },
                         { icon: 'shield-checkmark-outline', label: 'Privacy & Security', route: '/privacy' },
-                        { icon: 'help-circle-outline', label: 'Help & Support', route: null },
                     ].map((item, index) => (
                         <TouchableOpacity
                             key={index}
                             style={[styles.menuItem, { borderColor: colors.cardBorder }]}
-                            onPress={() => item.route && router.push(item.route as any)}
+                            onPress={() => router.push(item.route as any)}
                         >
                             <View style={[styles.menuIcon, { backgroundColor: colors.backgroundSecondary }]}>
                                 <Ionicons name={item.icon as any} size={20} color={colors.primary} />
@@ -192,11 +263,10 @@ export default function ProfileScreen() {
                     ))}
                 </View>
 
-                {/* Logout Button */}
-                {/* Logout Button */}
+                {/* Log Out Button */}
                 <TouchableOpacity
                     style={[styles.logoutButton, { borderColor: colors.error }]}
-                    onPress={() => router.replace('/onboarding')}
+                    onPress={handleLogOut}
                 >
                     <Ionicons name="log-out-outline" size={20} color={colors.error} />
                     <Text style={[styles.logoutText, { color: colors.error }]}>Log Out</Text>
@@ -205,12 +275,7 @@ export default function ProfileScreen() {
                 {/* Delete Data Button */}
                 <TouchableOpacity
                     style={[styles.logoutButton, { borderColor: colors.error, marginTop: Spacing.sm, borderStyle: 'dashed' }]}
-                    onPress={async () => {
-                        const success = await clearData();
-                        if (success) {
-                            router.replace('/onboarding');
-                        }
-                    }}
+                    onPress={handleDeleteData}
                 >
                     <Ionicons name="trash-outline" size={20} color={colors.error} />
                     <Text style={[styles.logoutText, { color: colors.error }]}>Delete All Data</Text>
@@ -253,8 +318,21 @@ const styles = StyleSheet.create({
         ...Typography.h3,
         marginBottom: Spacing.xs,
     },
-    profileEmail: {
+    profileSubtitle: {
         ...Typography.bodySm,
+    },
+    editNameRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+    },
+    nameInput: {
+        flex: 1,
+        borderRadius: BorderRadius.md,
+        borderWidth: 1,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        ...Typography.body,
     },
     editButton: {
         width: 40,

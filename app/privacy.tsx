@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { Stack, useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
     Alert,
     SafeAreaView,
@@ -8,43 +8,121 @@ import {
     StyleSheet,
     Switch,
     Text,
+    TextInput,
     TouchableOpacity,
     View,
 } from 'react-native';
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
+import { useOnboarding, useUserProfile } from '@/hooks/use-storage';
+import { clearPin, setPin } from '@/services/storage';
 
 export default function PrivacyScreen() {
     const colorScheme = useColorScheme();
     const colors = Colors[colorScheme ?? 'light'];
     const router = useRouter();
+    const { profile, updateProfile } = useUserProfile();
+    const { clearData } = useOnboarding();
 
-    const [pinEnabled, setPinEnabled] = useState(true);
-    const [biometricEnabled, setBiometricEnabled] = useState(true);
+    const [pinEnabled, setPinEnabled] = useState(profile.pinEnabled);
+    const [biometricEnabled, setBiometricEnabled] = useState(profile.biometricEnabled);
+    const [showPinSetup, setShowPinSetup] = useState(false);
+    const [newPin, setNewPin] = useState('');
+
+    // Sync from profile when it loads
+    useEffect(() => {
+        setPinEnabled(profile.pinEnabled);
+        setBiometricEnabled(profile.biometricEnabled);
+    }, [profile.pinEnabled, profile.biometricEnabled]);
+
+    const handlePinToggle = async (enabled: boolean) => {
+        if (enabled) {
+            setShowPinSetup(true);
+        } else {
+            Alert.alert(
+                'Disable PIN Lock',
+                'Are you sure you want to remove your PIN lock? Your data will no longer be protected on app launch.',
+                [
+                    { text: 'Cancel', style: 'cancel' },
+                    {
+                        text: 'Remove PIN',
+                        style: 'destructive',
+                        onPress: async () => {
+                            await clearPin();
+                            await updateProfile({ pinEnabled: false });
+                            setPinEnabled(false);
+                            setShowPinSetup(false);
+                        },
+                    },
+                ]
+            );
+        }
+    };
+
+    const handleSavePin = async () => {
+        if (newPin.length !== 4) {
+            Alert.alert('Invalid PIN', 'PIN must be exactly 4 digits.');
+            return;
+        }
+        try {
+            const success = await setPin(newPin);
+            if (success) {
+                await updateProfile({ pinEnabled: true });
+                setPinEnabled(true);
+                setShowPinSetup(false);
+                setNewPin('');
+                Alert.alert('PIN Set', 'Your PIN has been saved successfully.');
+            } else {
+                Alert.alert('Error', 'Failed to save PIN. Please try again.');
+            }
+        } catch (e) {
+            Alert.alert('Error', 'An unexpected error occurred while saving the PIN.');
+        }
+    };
+
+    const handleBiometricToggle = async (enabled: boolean) => {
+        await updateProfile({ biometricEnabled: enabled });
+        setBiometricEnabled(enabled);
+    };
+
+    const handleChangePin = () => {
+        setShowPinSetup(true);
+        setNewPin('');
+    };
 
     const handleExportData = () => {
         Alert.alert(
             'Export Data',
-            'Choose your export format:',
+            'Your cycle data will be exported as a JSON file you can share.',
             [
-                { text: 'CSV', onPress: () => console.log('Export CSV') },
-                { text: 'PDF', onPress: () => console.log('Export PDF') },
                 { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Export JSON',
+                    onPress: async () => {
+                        // TODO: implement Share sheet with JSON data
+                        Alert.alert('Coming Soon', 'Data export will be available in a future update.');
+                    },
+                },
             ]
         );
     };
 
     const handleDeleteAccount = () => {
         Alert.alert(
-            'Delete Account',
-            'Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.',
+            'Delete All Data',
+            'Are you sure? This will permanently remove all your cycle data, settings, and profile. This action cannot be undone.',
             [
                 { text: 'Cancel', style: 'cancel' },
                 {
-                    text: 'Delete',
+                    text: 'Delete Everything',
                     style: 'destructive',
-                    onPress: () => console.log('Delete account'),
+                    onPress: async () => {
+                        const success = await clearData();
+                        if (success) {
+                            router.replace('/onboarding');
+                        }
+                    },
                 },
             ]
         );
@@ -57,11 +135,13 @@ export default function PrivacyScreen() {
                     title: 'Privacy & Security',
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.primary,
+                    headerBackTitle: 'Back',
                 }}
             />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Access Security */}
                 <View style={styles.section}>
@@ -80,16 +160,40 @@ export default function PrivacyScreen() {
                             </View>
                             <Switch
                                 value={pinEnabled}
-                                onValueChange={setPinEnabled}
+                                onValueChange={handlePinToggle}
                                 trackColor={{ false: colors.border, true: colors.primary + '60' }}
                                 thumbColor={pinEnabled ? colors.primary : colors.textTertiary}
                             />
                         </View>
 
-                        {pinEnabled && (
+                        {showPinSetup && (
                             <>
                                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
-                                <TouchableOpacity style={styles.actionRow}>
+                                <View style={styles.pinSetupRow}>
+                                    <TextInput
+                                        style={[styles.pinInput, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundSecondary }]}
+                                        placeholder="Enter 4-digit PIN"
+                                        placeholderTextColor={colors.textTertiary}
+                                        keyboardType="number-pad"
+                                        maxLength={4}
+                                        secureTextEntry
+                                        value={newPin}
+                                        onChangeText={setNewPin}
+                                    />
+                                    <TouchableOpacity
+                                        style={[styles.pinSaveButton, { backgroundColor: colors.primary }]}
+                                        onPress={handleSavePin}
+                                    >
+                                        <Text style={styles.pinSaveText}>Save</Text>
+                                    </TouchableOpacity>
+                                </View>
+                            </>
+                        )}
+
+                        {pinEnabled && !showPinSetup && (
+                            <>
+                                <View style={[styles.divider, { backgroundColor: colors.border }]} />
+                                <TouchableOpacity style={styles.actionRow} onPress={handleChangePin}>
                                     <Text style={[styles.actionText, { color: colors.primary }]}>Change PIN</Text>
                                     <Ionicons name="chevron-forward" size={20} color={colors.primary} />
                                 </TouchableOpacity>
@@ -107,7 +211,7 @@ export default function PrivacyScreen() {
                             </View>
                             <Switch
                                 value={biometricEnabled}
-                                onValueChange={setBiometricEnabled}
+                                onValueChange={handleBiometricToggle}
                                 trackColor={{ false: colors.border, true: colors.primary + '60' }}
                                 thumbColor={biometricEnabled ? colors.primary : colors.textTertiary}
                             />
@@ -132,7 +236,7 @@ export default function PrivacyScreen() {
                         <View style={styles.exportContent}>
                             <Text style={[styles.exportTitle, { color: colors.text }]}>Export All Data</Text>
                             <Text style={[styles.exportDescription, { color: colors.textSecondary }]}>
-                                Download your history as CSV or PDF
+                                Download your history as JSON
                             </Text>
                         </View>
                         <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
@@ -165,11 +269,8 @@ export default function PrivacyScreen() {
                     <Ionicons name="lock-closed" size={20} color={colors.primary} />
                     <View style={styles.infoContent}>
                         <Text style={[styles.infoText, { color: colors.textSecondary }]}>
-                            Your health data is encrypted and stored securely. We never sell your personal information to third parties.
+                            Your health data is encrypted and stored locally on your device. We never collect or sell your personal information.
                         </Text>
-                        <TouchableOpacity>
-                            <Text style={[styles.linkText, { color: colors.primary }]}>Read our Privacy Policy</Text>
-                        </TouchableOpacity>
                     </View>
                 </View>
             </ScrollView>
@@ -232,6 +333,31 @@ const styles = StyleSheet.create({
     actionText: {
         ...Typography.bodyMedium,
     },
+    pinSetupRow: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: Spacing.md,
+        gap: Spacing.sm,
+    },
+    pinInput: {
+        flex: 1,
+        borderRadius: BorderRadius.md,
+        borderWidth: 1,
+        padding: Spacing.md,
+        ...Typography.body,
+        textAlign: 'center',
+        letterSpacing: 8,
+        fontSize: 24,
+    },
+    pinSaveButton: {
+        paddingHorizontal: Spacing.lg,
+        paddingVertical: Spacing.md,
+        borderRadius: BorderRadius.md,
+    },
+    pinSaveText: {
+        ...Typography.bodyMedium,
+        color: '#fff',
+    },
     exportButton: {
         flexDirection: 'row',
         alignItems: 'center',
@@ -288,8 +414,5 @@ const styles = StyleSheet.create({
     infoText: {
         ...Typography.bodySm,
         marginBottom: Spacing.sm,
-    },
-    linkText: {
-        ...Typography.bodyMedium,
     },
 });

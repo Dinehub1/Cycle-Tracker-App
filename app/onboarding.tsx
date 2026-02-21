@@ -36,10 +36,45 @@ export default function OnboardingScreen() {
 
     // State
     const [step, setStep] = useState(0);
+    const [userName, setUserName] = useState('');
     const [lastPeriodDate, setLastPeriodDate] = useState('');
     const [cycleLength, setCycleLength] = useState('28');
     const [periodLength, setPeriodLength] = useState('5');
+    const [validationError, setValidationError] = useState('');
     const [notificationsEnabled, setNotificationsEnabled] = useState(true);
+
+    const validateAndSetCycleLength = (val: string) => {
+        setCycleLength(val);
+        setValidationError('');
+    };
+
+    const validateAndSetPeriodLength = (val: string) => {
+        setPeriodLength(val);
+        setValidationError('');
+    };
+
+    const clampOnBlurCycle = () => {
+        const num = parseInt(cycleLength);
+        if (isNaN(num) || num < 15) {
+            setCycleLength('15');
+            setValidationError('Cycle length must be at least 15 days.');
+        } else if (num > 60) {
+            setCycleLength('60');
+            setValidationError('Cycle length cannot exceed 60 days.');
+        }
+    };
+
+    const clampOnBlurPeriod = () => {
+        const num = parseInt(periodLength);
+        const maxPeriod = Math.min(10, (parseInt(cycleLength) || 28) - 1);
+        if (isNaN(num) || num < 1) {
+            setPeriodLength('1');
+            setValidationError('Period length must be at least 1 day.');
+        } else if (num > maxPeriod) {
+            setPeriodLength(String(maxPeriod));
+            setValidationError(`Period length cannot exceed ${maxPeriod} days.`);
+        }
+    };
 
     const handleNext = () => {
         if (step === 3) {
@@ -69,6 +104,7 @@ export default function OnboardingScreen() {
 
             // Save User Profile Settings
             await updateProfile({
+                name: userName.trim(),
                 notificationsEnabled,
             });
 
@@ -83,6 +119,7 @@ export default function OnboardingScreen() {
     };
 
     const isNextDisabled = () => {
+        if (step === 0 && !userName.trim()) return true;
         if (step === 1 && !lastPeriodDate) return true;
         if (step === 2 && (!cycleLength || !periodLength)) return true;
         return false;
@@ -99,6 +136,17 @@ export default function OnboardingScreen() {
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
                 Track your cycle, understand your body, and live in sync with your rhythm.
             </Text>
+            <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.text }]}>What should we call you?</Text>
+                <TextInput
+                    style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundTertiary }]}
+                    value={userName}
+                    onChangeText={setUserName}
+                    placeholder="Your name"
+                    placeholderTextColor={colors.textTertiary}
+                    autoFocus
+                />
+            </View>
         </View>
     );
 
@@ -157,7 +205,8 @@ export default function OnboardingScreen() {
                 <TextInput
                     style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundTertiary }]}
                     value={cycleLength}
-                    onChangeText={setCycleLength}
+                    onChangeText={validateAndSetCycleLength}
+                    onBlur={clampOnBlurCycle}
                     keyboardType="number-pad"
                     maxLength={2}
                 />
@@ -168,11 +217,16 @@ export default function OnboardingScreen() {
                 <TextInput
                     style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.backgroundTertiary }]}
                     value={periodLength}
-                    onChangeText={setPeriodLength}
+                    onChangeText={validateAndSetPeriodLength}
+                    onBlur={clampOnBlurPeriod}
                     keyboardType="number-pad"
                     maxLength={2}
                 />
             </View>
+
+            {validationError ? (
+                <Text style={[styles.validationError, { color: colors.error }]}>{validationError}</Text>
+            ) : null}
         </View>
     );
 
@@ -218,7 +272,7 @@ export default function OnboardingScreen() {
                                     <Ionicons name="chevron-back" size={24} color={colors.text} />
                                 </TouchableOpacity>
                             )}
-                            <View style={styles.progressBarBackground}>
+                            <View style={[styles.progressBarBackground, { backgroundColor: colors.border }]}>
                                 <View style={[styles.progressBarFill, { width: `${((step + 1) / 4) * 100}%`, backgroundColor: colors.primary }]} />
                             </View>
                             <View style={{ width: 40 }} />{/* Spacer for alignment */}
@@ -276,7 +330,6 @@ const styles = StyleSheet.create({
     progressBarBackground: {
         flex: 1,
         height: 6,
-        backgroundColor: '#F0F0F0',
         borderRadius: 3,
         marginHorizontal: 20,
         overflow: 'hidden',
@@ -380,6 +433,12 @@ const styles = StyleSheet.create({
     },
     buttonDisabled: {
         opacity: 0.5,
+    },
+    validationError: {
+        fontSize: 13,
+        fontFamily: 'Manrope_400Regular',
+        textAlign: 'center',
+        marginTop: 4,
     },
     buttonText: {
         color: '#FFFFFF',

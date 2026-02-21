@@ -15,7 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { useCycleData, useUserProfile } from '@/hooks/use-storage';
+import { getPregnancyWeek, useCycleData, useUserProfile } from '@/hooks/use-storage';
 import { CyclePhase } from '@/types';
 
 const phaseInfo: Record<CyclePhase, { label: string; color: (colors: any) => string; description: string }> = {
@@ -105,7 +105,15 @@ export default function TodayScreen() {
       return "Track your basal body temperature for better fertility predictions.";
     }
     if (isPregnancy) {
-      return "Baby is the size of a poppy seed today (Week 4).";
+      const week = getPregnancyWeek(cycleData.lastPeriodStart);
+      const weekLabel = week > 0 ? `Week ${week}` : 'Early pregnancy';
+      const sizes: Record<number, string> = {
+        4: 'a poppy seed', 5: 'a sesame seed', 6: 'a lentil', 7: 'a blueberry',
+        8: 'a kidney bean', 9: 'a grape', 10: 'a strawberry', 12: 'a lime',
+        16: 'an avocado', 20: 'a banana', 24: 'an ear of corn', 28: 'an eggplant',
+      };
+      const size = sizes[week] ?? sizes[Math.max(...Object.keys(sizes).map(Number).filter(k => k <= week))] ?? 'a tiny miracle';
+      return `${weekLabel}: Baby is about the size of ${size}. \uD83C\uDF7C`;
     }
     return currentPhase.description;
   };
@@ -127,10 +135,15 @@ export default function TodayScreen() {
         {/* Header */}
         <View style={styles.header}>
           <View>
-            <Text style={[styles.greeting, { color: colors.textSecondary }]}>Good morning,</Text>
-            <Text style={[styles.name, { color: colors.text }]}>{profile.name || 'Sarah'}</Text>
+            <Text style={[styles.greeting, { color: colors.textSecondary }]}>{(() => { const h = new Date().getHours(); return h < 12 ? 'Good morning,' : h < 17 ? 'Good afternoon,' : 'Good evening,'; })()}</Text>
+            <Text style={[styles.name, { color: colors.text }]}>{profile.name || 'there'}</Text>
           </View>
-          <TouchableOpacity style={[styles.notificationButton, { backgroundColor: colors.backgroundSecondary }]}>
+          <TouchableOpacity
+            style={[styles.notificationButton, { backgroundColor: colors.backgroundSecondary }]}
+            onPress={() => router.push('/notifications')}
+            accessibilityLabel="Open notifications settings"
+            accessibilityRole="button"
+          >
             <Ionicons name="notifications-outline" size={24} color={colors.text} />
           </TouchableOpacity>
         </View>
@@ -214,9 +227,11 @@ export default function TodayScreen() {
         <TouchableOpacity
           style={[styles.logButton, { backgroundColor: colors.primary }]}
           onPress={handleLogSymptoms}
+          accessibilityLabel="Log today's symptoms"
+          accessibilityRole="button"
         >
           <Ionicons name="add-circle" size={24} color="#fff" />
-          <Text style={styles.logButtonText}>Log Today's Symptoms</Text>
+          <Text style={styles.logButtonText}>Log Today&apos;s Symptoms</Text>
         </TouchableOpacity>
 
         {/* Quick Actions */}

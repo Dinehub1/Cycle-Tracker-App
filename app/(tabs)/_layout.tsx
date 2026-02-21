@@ -70,7 +70,7 @@ export default function TabLayout() {
         name="history"
         options={{
           title: 'History',
-          headerTitle: 'Symptom History',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'calendar' : 'calendar-outline'} color={color} focused={focused} />
           ),
@@ -80,7 +80,7 @@ export default function TabLayout() {
         name="insights"
         options={{
           title: 'Insights',
-          headerTitle: 'Health Insights',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'stats-chart' : 'stats-chart-outline'} color={color} focused={focused} />
           ),
@@ -90,7 +90,7 @@ export default function TabLayout() {
         name="discover"
         options={{
           title: 'Discover',
-          headerTitle: 'Discover Library',
+          headerShown: false,
           tabBarIcon: ({ color, focused }) => (
             <TabBarIcon name={focused ? 'book' : 'book-outline'} color={color} focused={focused} />
           ),
@@ -119,6 +119,6 @@ const styles = StyleSheet.create({
     borderRadius: BorderRadius.lg,
   },
   iconContainerFocused: {
-    backgroundColor: 'rgba(94, 25, 230, 0.1)',
+    backgroundColor: Colors.light.primary + '1A', // Use theme primary with 10% opacity
   },
 });

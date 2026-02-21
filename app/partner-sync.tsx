@@ -102,11 +102,13 @@ export default function PartnerSyncScreen() {
                     title: 'Partner Sync',
                     headerStyle: { backgroundColor: colors.background },
                     headerTintColor: colors.primary,
+                    headerBackTitle: 'Back',
                 }}
             />
             <ScrollView
                 showsVerticalScrollIndicator={false}
                 contentContainerStyle={styles.scrollContent}
+                keyboardShouldPersistTaps="handled"
             >
                 {/* Hero Section */}
                 <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>

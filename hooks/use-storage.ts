@@ -14,14 +14,16 @@ import {
     CycleData,
     CycleEntry,
     CyclePhase,
+    CycleStats,
     CycleStatus,
     DEFAULT_CYCLE_DATA,
     DEFAULT_USER_PROFILE,
     UserProfile,
 } from '@/types';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 
-// Calculate cycle phase and status
+// ─── Cycle phase + status calculator ─────────────────────────────────────────
+
 function calculateCycleStatus(cycleData: CycleData): CycleStatus {
     const defaultStatus: CycleStatus = {
         currentDay: 1,
@@ -31,30 +33,26 @@ function calculateCycleStatus(cycleData: CycleData): CycleStatus {
         ovulationDay: false,
     };
 
-    if (!cycleData.lastPeriodStart) {
-        return defaultStatus;
-    }
+    if (!cycleData.lastPeriodStart) return defaultStatus;
 
     const lastPeriod = new Date(cycleData.lastPeriodStart);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     lastPeriod.setHours(0, 0, 0, 0);
 
-    const diffTime = today.getTime() - lastPeriod.getTime();
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+    const diffDays = Math.max(0, Math.floor(
+        (today.getTime() - lastPeriod.getTime()) / (1000 * 60 * 60 * 24)
+    ));
 
-    // Calculate current day in cycle (1-indexed)
     const currentDay = (diffDays % cycleData.cycleLength) + 1;
+    const daysUntilPeriod = Math.max(0, cycleData.cycleLength - currentDay + 1);
 
-    // Calculate days until next period
-    const daysUntilPeriod = cycleData.cycleLength - currentDay + 1;
-
-    // Determine phase
-    let phase: CyclePhase;
-    const ovulationDay = Math.floor(cycleData.cycleLength / 2); // Approximate
+    // Fix: ovulation = cycleLength - 14 (luteal phase is always ~14 days)
+    const ovulationDay = cycleData.cycleLength - 14;
     const fertileStart = ovulationDay - 5;
     const fertileEnd = ovulationDay + 1;
 
+    let phase: CyclePhase;
     if (currentDay <= cycleData.periodLength) {
         phase = 'period';
     } else if (currentDay < fertileStart) {
@@ -65,19 +63,27 @@ function calculateCycleStatus(cycleData: CycleData): CycleStatus {
         phase = 'luteal';
     }
 
-    const fertileWindow = currentDay >= fertileStart && currentDay <= fertileEnd;
-    const isOvulationDay = currentDay === ovulationDay;
-
     return {
         currentDay,
         phase,
         daysUntilPeriod,
-        fertileWindow,
-        ovulationDay: isOvulationDay,
+        fertileWindow: currentDay >= fertileStart && currentDay <= fertileEnd,
+        ovulationDay: currentDay === ovulationDay,
     };
 }
 
-// Hook for cycle data
+// ─── Pregnancy week calculator (LMP method) ───────────────────────────────────
+
+export function getPregnancyWeek(lastPeriodStart: string | null): number {
+    if (!lastPeriodStart) return 0;
+    const lmp = new Date(lastPeriodStart);
+    const today = new Date();
+    const diffDays = Math.floor((today.getTime() - lmp.getTime()) / (1000 * 60 * 60 * 24));
+    return Math.max(0, Math.floor(diffDays / 7)); // LMP-based: weeks since last period
+}
+
+// ─── useCycleData hook ────────────────────────────────────────────────────────
+
 export function useCycleData() {
     const [cycleData, setCycleData] = useState<CycleData>(DEFAULT_CYCLE_DATA);
     const [cycleStatus, setCycleStatus] = useState<CycleStatus | null>(null);
@@ -106,23 +112,63 @@ export function useCycleData() {
 
     const addEntry = useCallback(async (entry: CycleEntry) => {
         const success = await addCycleEntry(entry);
-        if (success) {
-            await loadData(); // Reload to get updated data
-        }
+        if (success) await loadData();
         return success;
     }, [loadData]);
 
     const setLastPeriod = useCallback(async (date: string) => {
         const success = await setLastPeriodStart(date);
-        if (success) {
-            await loadData();
-        }
+        if (success) await loadData();
         return success;
     }, [loadData]);
+
+    // Computed cycle statistics — memoised so they don't recalculate on every render
+    const cycleStats = useMemo<CycleStats>(() => {
+        const entries = cycleData.entries;
+        const periodStartDates = entries
+            .filter(e => e.flow === 'light' || e.flow === 'medium' || e.flow === 'heavy')
+            .map(e => new Date(e.date).getTime())
+            .sort((a, b) => a - b);
+
+        if (periodStartDates.length < 2) {
+            return {
+                avgLength: cycleData.cycleLength,
+                shortestCycle: cycleData.cycleLength,
+                longestCycle: cycleData.cycleLength,
+                totalEntries: entries.length,
+            };
+        }
+
+        const cycleLengths: number[] = [];
+        for (let i = 1; i < periodStartDates.length; i++) {
+            const diff = Math.round(
+                (periodStartDates[i] - periodStartDates[i - 1]) / (1000 * 60 * 60 * 24)
+            );
+            if (diff > 15 && diff < 60) cycleLengths.push(diff);
+        }
+
+        if (cycleLengths.length === 0) {
+            return {
+                avgLength: cycleData.cycleLength,
+                shortestCycle: cycleData.cycleLength,
+                longestCycle: cycleData.cycleLength,
+                totalEntries: entries.length,
+            };
+        }
+
+        const avg = Math.round(cycleLengths.reduce((a, b) => a + b, 0) / cycleLengths.length);
+        return {
+            avgLength: avg,
+            shortestCycle: Math.min(...cycleLengths),
+            longestCycle: Math.max(...cycleLengths),
+            totalEntries: entries.length,
+        };
+    }, [cycleData]);
 
     return {
         cycleData,
         cycleStatus,
+        cycleStats,
         loading,
         saveData,
         addEntry,
@@ -131,7 +177,8 @@ export function useCycleData() {
     };
 }
 
-// Hook for user profile
+// ─── useUserProfile hook ──────────────────────────────────────────────────────
+
 export function useUserProfile() {
     const [profile, setProfile] = useState<UserProfile>(DEFAULT_USER_PROFILE);
     const [loading, setLoading] = useState(true);
@@ -150,71 +197,53 @@ export function useUserProfile() {
     const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
         const newProfile = { ...profile, ...updates };
         const success = await saveUserProfile(newProfile);
-        if (success) {
-            setProfile(newProfile);
-        }
+        if (success) setProfile(newProfile);
         return success;
     }, [profile]);
 
-    return {
-        profile,
-        loading,
-        updateProfile,
-        refresh: loadProfile,
-    };
+    return { profile, loading, updateProfile, refresh: loadProfile };
 }
 
-// Hook for onboarding status
+// ─── useOnboarding hook ───────────────────────────────────────────────────────
+
 export function useOnboarding() {
     const [isComplete, setIsComplete] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const check = async () => {
-            const complete = await isOnboardingComplete();
+        isOnboardingComplete().then(complete => {
             setIsComplete(complete);
             setLoading(false);
-        };
-        check();
+        });
     }, []);
 
     const completeOnboarding = useCallback(async () => {
         const success = await setOnboardingComplete(true);
-        if (success) {
-            setIsComplete(true);
-        }
+        if (success) setIsComplete(true);
         return success;
     }, []);
 
     const clearData = useCallback(async () => {
         const success = await clearAllData();
-        if (success) {
-            setIsComplete(false);
-        }
+        if (success) setIsComplete(false);
         return success;
     }, []);
 
-    return {
-        isComplete,
-        loading,
-        completeOnboarding,
-        clearData,
-    };
+    return { isComplete, loading, completeOnboarding, clearData };
 }
 
-// Hook for getting entry by date
+// ─── useDayEntry hook ─────────────────────────────────────────────────────────
+
 export function useDayEntry(date: string) {
     const [entry, setEntry] = useState<CycleEntry | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        const load = async () => {
-            setLoading(true);
-            const data = await getEntryByDate(date);
+        setLoading(true);
+        getEntryByDate(date).then(data => {
             setEntry(data);
             setLoading(false);
-        };
-        load();
+        });
     }, [date]);
 
     return { entry, loading };

@@ -7,8 +7,10 @@ import {
     UserProfile,
 } from '@/types';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
-// Generic storage functions
+// ─── Generic AsyncStorage helpers ────────────────────────────────────────────
+
 export async function getItem<T>(key: string): Promise<T | null> {
     try {
         const value = await AsyncStorage.getItem(key);
@@ -39,18 +41,8 @@ export async function removeItem(key: string): Promise<boolean> {
     }
 }
 
-export async function clearAll(): Promise<boolean> {
-    try {
-        const keys = Object.values(STORAGE_KEYS);
-        await AsyncStorage.multiRemove(keys);
-        return true;
-    } catch (error) {
-        console.error('Error clearing storage:', error);
-        return false;
-    }
-}
+// ─── Cycle Data ───────────────────────────────────────────────────────────────
 
-// Cycle Data functions
 export async function getCycleData(): Promise<CycleData> {
     const data = await getItem<CycleData>(STORAGE_KEYS.CYCLE_DATA);
     return data ?? DEFAULT_CYCLE_DATA;
@@ -63,22 +55,19 @@ export async function saveCycleData(data: CycleData): Promise<boolean> {
 export async function addCycleEntry(entry: CycleEntry): Promise<boolean> {
     const data = await getCycleData();
 
-    // Check if entry for this date already exists
     const existingIndex = data.entries.findIndex(e => e.date === entry.date);
 
     if (existingIndex >= 0) {
-        // Update existing entry
         data.entries[existingIndex] = {
             ...data.entries[existingIndex],
             ...entry,
             updatedAt: new Date().toISOString(),
         };
     } else {
-        // Add new entry
         data.entries.push(entry);
     }
 
-    // Sort entries by date (newest first)
+    // Sort entries newest-first
     data.entries.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     return saveCycleData(data);
@@ -95,7 +84,8 @@ export async function setLastPeriodStart(date: string): Promise<boolean> {
     return saveCycleData(data);
 }
 
-// User Profile functions
+// ─── User Profile ─────────────────────────────────────────────────────────────
+
 export async function getUserProfile(): Promise<UserProfile> {
     const data = await getItem<UserProfile>(STORAGE_KEYS.USER_PROFILE);
     return data ?? DEFAULT_USER_PROFILE;
@@ -110,7 +100,8 @@ export async function updateUserProfile(updates: Partial<UserProfile>): Promise<
     return saveUserProfile({ ...current, ...updates });
 }
 
-// Onboarding status
+// ─── Onboarding ───────────────────────────────────────────────────────────────
+
 export async function isOnboardingComplete(): Promise<boolean> {
     const value = await getItem<boolean>(STORAGE_KEYS.ONBOARDING_COMPLETE);
     return value ?? false;
@@ -120,19 +111,53 @@ export async function setOnboardingComplete(complete: boolean = true): Promise<b
     return setItem(STORAGE_KEYS.ONBOARDING_COMPLETE, complete);
 }
 
-// PIN functions
+// ─── PIN — stored securely via SecureStore (NOT AsyncStorage) ─────────────────
+
 export async function getPin(): Promise<string | null> {
-    return getItem<string>(STORAGE_KEYS.PIN);
+    try {
+        return await SecureStore.getItemAsync(STORAGE_KEYS.PIN);
+    } catch (error) {
+        console.error('SecureStore getPin error:', error);
+        return null;
+    }
 }
 
 export async function setPin(pin: string): Promise<boolean> {
-    return setItem(STORAGE_KEYS.PIN, pin);
+    try {
+        await SecureStore.setItemAsync(STORAGE_KEYS.PIN, pin);
+        return true;
+    } catch (error) {
+        console.error('SecureStore setPin error:', error);
+        return false;
+    }
 }
+
+export async function verifyPin(input: string): Promise<boolean> {
+    const stored = await getPin();
+    return stored === input;
+}
+
+export async function clearPin(): Promise<boolean> {
+    try {
+        await SecureStore.deleteItemAsync(STORAGE_KEYS.PIN);
+        return true;
+    } catch (error) {
+        console.error('SecureStore clearPin error:', error);
+        return false;
+    }
+}
+
+// ─── Clear All Data ───────────────────────────────────────────────────────────
 
 export async function clearAllData(): Promise<boolean> {
     try {
-        const keys = Object.values(STORAGE_KEYS);
-        await AsyncStorage.multiRemove(keys);
+        const asyncKeys = [
+            STORAGE_KEYS.USER_PROFILE,
+            STORAGE_KEYS.CYCLE_DATA,
+            STORAGE_KEYS.ONBOARDING_COMPLETE,
+        ];
+        await AsyncStorage.multiRemove(asyncKeys);
+        await clearPin();
         return true;
     } catch (error) {
         console.error('Error clearing all data:', error);

@@ -2,18 +2,18 @@ import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
+    Alert,
     Animated,
     SafeAreaView,
     StyleSheet,
     Text,
     TouchableOpacity,
-    View,
+    View
 } from 'react-native';
 
 import { BorderRadius, Colors, Spacing, Typography } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-
-const CORRECT_PIN = '1234';
+import { clearPin, updateUserProfile, verifyPin } from '@/services/storage';
 
 export default function PinLockScreen() {
     const colorScheme = useColorScheme();
@@ -31,23 +31,24 @@ export default function PinLockScreen() {
             setError(false);
 
             if (newPin.length === 4) {
-                if (newPin === CORRECT_PIN) {
-                    router.replace('/(tabs)');
-                } else {
-                    setError(true);
-                    // Shake animation
-                    Animated.sequence([
-                        Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-                        Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
-                        Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
-                        Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
-                    ]).start(() => {
-                        setTimeout(() => {
-                            setPin('');
-                            setError(false);
-                        }, 300);
-                    });
-                }
+                verifyPin(newPin).then(isCorrect => {
+                    if (isCorrect) {
+                        router.replace('/(tabs)');
+                    } else {
+                        setError(true);
+                        Animated.sequence([
+                            Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+                            Animated.timing(shakeAnim, { toValue: -10, duration: 50, useNativeDriver: true }),
+                            Animated.timing(shakeAnim, { toValue: 10, duration: 50, useNativeDriver: true }),
+                            Animated.timing(shakeAnim, { toValue: 0, duration: 50, useNativeDriver: true }),
+                        ]).start(() => {
+                            setTimeout(() => {
+                                setPin('');
+                                setError(false);
+                            }, 300);
+                        });
+                    }
+                });
             }
         }
     };
@@ -60,8 +61,29 @@ export default function PinLockScreen() {
     };
 
     const handleBiometric = () => {
-        // Simulate biometric success
-        router.replace('/(tabs)');
+        Alert.alert(
+            'Biometric Unlock',
+            'Biometric authentication is not yet configured. Please enter your PIN.',
+        );
+    };
+
+    const handleForgotPin = () => {
+        Alert.alert(
+            'Forgot PIN?',
+            'This will remove your PIN lock and take you to the app. You can set a new PIN in Privacy & Security settings.',
+            [
+                { text: 'Cancel', style: 'cancel' },
+                {
+                    text: 'Remove PIN',
+                    style: 'destructive',
+                    onPress: async () => {
+                        await clearPin();
+                        await updateUserProfile({ pinEnabled: false });
+                        router.replace('/(tabs)');
+                    },
+                },
+            ]
+        );
     };
 
     const renderPinDots = () => {
@@ -164,7 +186,7 @@ export default function PinLockScreen() {
             {renderNumberPad()}
 
             {/* Forgot PIN Link */}
-            <TouchableOpacity style={styles.forgotButton}>
+            <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPin}>
                 <Text style={[styles.forgotText, { color: colors.primary }]}>Forgot PIN?</Text>
             </TouchableOpacity>
         </SafeAreaView>
