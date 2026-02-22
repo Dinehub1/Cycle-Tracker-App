@@ -146,7 +146,7 @@ export default function TodayScreen() {
             accessibilityLabel="Open notifications settings"
             accessibilityRole="button"
           >
-            <Ionicons name="notifications-outline" size={24} color={colors.text} />
+            <Ionicons name="notifications-outline" size={24} color={colors.text} ></Ionicons>
           </TouchableOpacity>
         </View>
 
@@ -197,14 +197,14 @@ export default function TodayScreen() {
           <View style={styles.statsRow}>
             <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
               <View style={[styles.statIcon, { backgroundColor: colors.period + '20' }]}>
-                <Ionicons name="heart" size={20} color={colors.period} />
+                <Ionicons name="heart" size={20} color={colors.period} ></Ionicons>
               </View>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Pregnancy</Text>
               <Text style={[styles.statValue, { color: colors.text }]}>{fertility.pregnancy} Chance</Text>
             </View>
             <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
               <View style={[styles.statIcon, { backgroundColor: colors.fertile + '20' }]}>
-                <Ionicons name="leaf" size={20} color={colors.fertile} />
+                <Ionicons name="leaf" size={20} color={colors.fertile} ></Ionicons>
               </View>
               <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Fertility</Text>
               <Text style={[styles.statValue, { color: colors.text }]}>{fertility.fertility}</Text>
@@ -215,7 +215,7 @@ export default function TodayScreen() {
         {/* Daily Insight — AI-powered when available */}
         <View style={[styles.insightCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
           <View style={[styles.insightIcon, { backgroundColor: aiPrediction ? '#8b5cf620' : colors.ovulation + '20' }]}>
-            <Ionicons name={aiPrediction ? 'sparkles' : isTTC ? 'heart-circle' : 'bulb'} size={24} color={aiPrediction ? '#8b5cf6' : colors.ovulation} />
+            <Ionicons name={aiPrediction ? 'sparkles' : isTTC ? 'heart-circle' : 'bulb'} size={24} color={aiPrediction ? '#8b5cf6' : colors.ovulation} ></Ionicons>
           </View>
           <View style={styles.insightContent}>
             <Text style={[styles.insightTitle, { color: colors.text }]}>
@@ -242,7 +242,7 @@ export default function TodayScreen() {
           accessibilityLabel="Log today's symptoms"
           accessibilityRole="button"
         >
-          <Ionicons name="add-circle" size={24} color="#fff" />
+          <Ionicons name="add-circle" size={24} color="#fff" ></Ionicons>
           <Text style={styles.logButtonText}>Log Today&apos;s Symptoms</Text>
         </TouchableOpacity>
 
@@ -254,7 +254,7 @@ export default function TodayScreen() {
             onPress={handleLogSymptoms}
           >
             <View style={[styles.actionIcon, { backgroundColor: colors.period + '20' }]}>
-              <Ionicons name="water" size={24} color={colors.period} />
+              <Ionicons name="water" size={24} color={colors.period} ></Ionicons>
             </View>
             <Text style={[styles.actionLabel, { color: colors.text }]}>Log Flow</Text>
           </TouchableOpacity>
@@ -263,7 +263,7 @@ export default function TodayScreen() {
             onPress={handleLogSymptoms}
           >
             <View style={[styles.actionIcon, { backgroundColor: colors.ovulation + '20' }]}>
-              <Ionicons name="happy" size={24} color={colors.ovulation} />
+              <Ionicons name="happy" size={24} color={colors.ovulation} ></Ionicons>
             </View>
             <Text style={[styles.actionLabel, { color: colors.text }]}>Log Mood</Text>
           </TouchableOpacity>
@@ -272,7 +272,7 @@ export default function TodayScreen() {
             onPress={handleLogSymptoms}
           >
             <View style={[styles.actionIcon, { backgroundColor: colors.info + '20' }]}>
-              <Ionicons name="medical" size={24} color={colors.info} />
+              <Ionicons name="medical" size={24} color={colors.info} ></Ionicons>
             </View>
             <Text style={[styles.actionLabel, { color: colors.text }]}>Symptoms</Text>
           </TouchableOpacity>

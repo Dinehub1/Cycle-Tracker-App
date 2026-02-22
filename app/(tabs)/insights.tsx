@@ -160,7 +160,7 @@ const HealthInsightsScreen = () => {
                     <View style={styles.cardHeader}>
                         <View style={styles.cardHeaderLeft}>
                             <View style={[styles.cardIcon, { backgroundColor: '#8b5cf620' }]}>
-                                <Ionicons name="sparkles" size={18} color="#8b5cf6" />
+                                <Ionicons name="sparkles" size={18} color="#8b5cf6" ></Ionicons>
                             </View>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>AI Predictions</Text>
                         </View>
@@ -177,7 +177,7 @@ const HealthInsightsScreen = () => {
 
                     {!hasEnoughForAI ? (
                         <View style={styles.emptySection}>
-                            <Ionicons name="sparkles-outline" size={32} color={colors.textTertiary} />
+                            <Ionicons name="sparkles-outline" size={32} color={colors.textTertiary} ></Ionicons>
                             <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
                                 Log at least 1 entry with period data{'\n'}to unlock AI predictions
                             </Text>
@@ -216,7 +216,7 @@ const HealthInsightsScreen = () => {
                             {/* Prediction Stats */}
                             <View style={styles.aiStatsRow}>
                                 <View style={[styles.aiStatBox, { backgroundColor: colors.period + '10' }]}>
-                                    <Ionicons name="calendar" size={16} color={colors.period} />
+                                    <Ionicons name="calendar" size={16} color={colors.period} ></Ionicons>
                                     <Text style={[styles.aiStatValue, { color: colors.text }]}>
                                         {formatDate(prediction.nextPeriodDate)}
                                     </Text>
@@ -225,7 +225,7 @@ const HealthInsightsScreen = () => {
                                     </Text>
                                 </View>
                                 <View style={[styles.aiStatBox, { backgroundColor: colors.primary + '10' }]}>
-                                    <Ionicons name="sync" size={16} color={colors.primary} />
+                                    <Ionicons name="sync" size={16} color={colors.primary} ></Ionicons>
                                     <Text style={[styles.aiStatValue, { color: colors.text }]}>
                                         {prediction.predictedCycleLength}d
                                     </Text>
@@ -234,7 +234,7 @@ const HealthInsightsScreen = () => {
                                     </Text>
                                 </View>
                                 <View style={[styles.aiStatBox, { backgroundColor: colors.fertile + '10' }]}>
-                                    <Ionicons name="leaf" size={16} color={colors.fertile} />
+                                    <Ionicons name="leaf" size={16} color={colors.fertile} ></Ionicons>
                                     <Text style={[styles.aiStatValue, { color: colors.text }]}>
                                         {formatDate(prediction.fertileWindowStart)}
                                     </Text>
@@ -289,7 +289,7 @@ const HealthInsightsScreen = () => {
                         </View>
                     ) : aiError ? (
                         <View style={styles.emptySection}>
-                            <Ionicons name="cloud-offline-outline" size={32} color={colors.textTertiary} />
+                            <Ionicons name="cloud-offline-outline" size={32} color={colors.textTertiary} ></Ionicons>
                             <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
                                 Could not load predictions.{'\n'}Pull to refresh to try again.
                             </Text>
@@ -304,7 +304,7 @@ const HealthInsightsScreen = () => {
                             {currentPhase.iconPack === 'mci' ? (
                                 <MaterialCommunityIcons name={currentPhase.icon as any} size={28} color="#fff" />
                             ) : (
-                                <Ionicons name={currentPhase.icon as any} size={28} color="#fff" />
+                                <Ionicons name={currentPhase.icon as any} size={28} color="#fff" ></Ionicons>
                             )}
                         </View>
                         <View style={{ flex: 1 }}>
@@ -319,11 +319,11 @@ const HealthInsightsScreen = () => {
                     <Text style={styles.phaseCardTip}>{currentPhase.tip}</Text>
                     <View style={styles.phaseDetails}>
                         <View style={styles.phaseDetail}>
-                            <Ionicons name="fitness-outline" size={14} color="rgba(255,255,255,0.8)" />
+                            <Ionicons name="fitness-outline" size={14} color="rgba(255,255,255,0.8)" ></Ionicons>
                             <Text style={styles.phaseDetailText}>{currentPhase.exercise}</Text>
                         </View>
                         <View style={styles.phaseDetail}>
-                            <Ionicons name="nutrition-outline" size={14} color="rgba(255,255,255,0.8)" />
+                            <Ionicons name="nutrition-outline" size={14} color="rgba(255,255,255,0.8)" ></Ionicons>
                             <Text style={styles.phaseDetailText}>{currentPhase.nutrition}</Text>
                         </View>
                     </View>
@@ -333,28 +333,28 @@ const HealthInsightsScreen = () => {
                 <View style={styles.statsRow}>
                     <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                         <View style={[styles.statIconBg, { backgroundColor: colors.primary + '15' }]}>
-                            <Ionicons name="sync-outline" size={18} color={colors.primary} />
+                            <Ionicons name="sync-outline" size={18} color={colors.primary} ></Ionicons>
                         </View>
                         <Text style={[styles.statNumber, { color: colors.primary }]}>{cycleStats.avgLength}</Text>
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Avg Cycle</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                         <View style={[styles.statIconBg, { backgroundColor: colors.ovulation + '15' }]}>
-                            <Ionicons name="flame-outline" size={18} color={colors.ovulation} />
+                            <Ionicons name="flame-outline" size={18} color={colors.ovulation} ></Ionicons>
                         </View>
                         <Text style={[styles.statNumber, { color: colors.ovulation }]}>{loggingStreak}</Text>
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>Day Streak</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                         <View style={[styles.statIconBg, { backgroundColor: colors.info + '15' }]}>
-                            <Ionicons name="water-outline" size={18} color={colors.info} />
+                            <Ionicons name="water-outline" size={18} color={colors.info} ></Ionicons>
                         </View>
                         <Text style={[styles.statNumber, { color: colors.info }]}>{waterAvg > 0 ? `${waterAvg}` : '—'}</Text>
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{waterAvg > 0 ? 'Avg ml' : 'Water'}</Text>
                     </View>
                     <View style={[styles.statCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                         <View style={[styles.statIconBg, { backgroundColor: colors.period + '15' }]}>
-                            <Ionicons name="thermometer-outline" size={18} color={colors.period} />
+                            <Ionicons name="thermometer-outline" size={18} color={colors.period} ></Ionicons>
                         </View>
                         <Text style={[styles.statNumber, { color: colors.period }]}>{bbtAvg !== '0' ? `${bbtAvg}` : '—'}</Text>
                         <Text style={[styles.statLabel, { color: colors.textSecondary }]}>{bbtAvg !== '0' ? 'Avg °C' : 'BBT'}</Text>
@@ -366,7 +366,7 @@ const HealthInsightsScreen = () => {
                     <View style={styles.cardHeader}>
                         <View style={styles.cardHeaderLeft}>
                             <View style={[styles.cardIcon, { backgroundColor: colors.primary + '15' }]}>
-                                <Ionicons name="analytics-outline" size={18} color={colors.primary} />
+                                <Ionicons name="analytics-outline" size={18} color={colors.primary} ></Ionicons>
                             </View>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>Cycle Range</Text>
                         </View>
@@ -424,7 +424,7 @@ const HealthInsightsScreen = () => {
                     <View style={styles.cardHeader}>
                         <View style={styles.cardHeaderLeft}>
                             <View style={[styles.cardIcon, { backgroundColor: colors.info + '15' }]}>
-                                <Ionicons name="medical-outline" size={18} color={colors.info} />
+                                <Ionicons name="medical-outline" size={18} color={colors.info} ></Ionicons>
                             </View>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>Top Symptoms</Text>
                         </View>
@@ -457,7 +457,7 @@ const HealthInsightsScreen = () => {
                         </View>
                     ) : (
                         <View style={styles.emptySection}>
-                            <Ionicons name="medical-outline" size={32} color={colors.textTertiary} />
+                            <Ionicons name="medical-outline" size={32} color={colors.textTertiary} ></Ionicons>
                             <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
                                 Log symptoms to see your patterns here
                             </Text>
@@ -470,7 +470,7 @@ const HealthInsightsScreen = () => {
                     <View style={styles.cardHeader}>
                         <View style={styles.cardHeaderLeft}>
                             <View style={[styles.cardIcon, { backgroundColor: colors.ovulation + '15' }]}>
-                                <Ionicons name="happy-outline" size={18} color={colors.ovulation} />
+                                <Ionicons name="happy-outline" size={18} color={colors.ovulation} ></Ionicons>
                             </View>
                             <Text style={[styles.cardTitle, { color: colors.text }]}>Mood Patterns</Text>
                         </View>
@@ -506,7 +506,7 @@ const HealthInsightsScreen = () => {
                         </>
                     ) : (
                         <View style={styles.emptySection}>
-                            <Ionicons name="happy-outline" size={32} color={colors.textTertiary} />
+                            <Ionicons name="happy-outline" size={32} color={colors.textTertiary} ></Ionicons>
                             <Text style={[styles.emptyText, { color: colors.textTertiary }]}>
                                 Log your mood daily to discover patterns
                             </Text>
@@ -522,7 +522,7 @@ const HealthInsightsScreen = () => {
                         {currentPhase.iconPack === 'mci' ? (
                             <MaterialCommunityIcons name={currentPhase.icon as any} size={22} color={phaseColor} />
                         ) : (
-                            <Ionicons name={currentPhase.icon as any} size={22} color={phaseColor} />
+                            <Ionicons name={currentPhase.icon as any} size={22} color={phaseColor} ></Ionicons>
                         )}
                     </View>
                     <View style={styles.tipTextContainer}>
@@ -534,7 +534,7 @@ const HealthInsightsScreen = () => {
                 {waterAvg > 0 && waterAvg < 2000 && (
                     <View style={[styles.tipCard, { backgroundColor: colors.info + '10', borderColor: colors.info + '25' }]}>
                         <View style={[styles.tipIconContainer, { backgroundColor: colors.info + '20' }]}>
-                            <Ionicons name="water" size={22} color={colors.info} />
+                            <Ionicons name="water" size={22} color={colors.info} ></Ionicons>
                         </View>
                         <View style={styles.tipTextContainer}>
                             <Text style={[styles.tipTitle, { color: colors.text }]}>Hydration Goal</Text>
@@ -548,7 +548,7 @@ const HealthInsightsScreen = () => {
                 {loggingStreak >= 3 && (
                     <View style={[styles.tipCard, { backgroundColor: colors.fertile + '10', borderColor: colors.fertile + '25' }]}>
                         <View style={[styles.tipIconContainer, { backgroundColor: colors.fertile + '20' }]}>
-                            <Ionicons name="flame" size={22} color={colors.fertile} />
+                            <Ionicons name="flame" size={22} color={colors.fertile} ></Ionicons>
                         </View>
                         <View style={styles.tipTextContainer}>
                             <Text style={[styles.tipTitle, { color: colors.text }]}>{loggingStreak}-Day Streak! 🎉</Text>
@@ -562,7 +562,7 @@ const HealthInsightsScreen = () => {
                 {!hasData && (
                     <View style={[styles.tipCard, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
                         <View style={[styles.tipIconContainer, { backgroundColor: colors.primary + '15' }]}>
-                            <Ionicons name="sparkles" size={22} color={colors.primary} />
+                            <Ionicons name="sparkles" size={22} color={colors.primary} ></Ionicons>
                         </View>
                         <View style={styles.tipTextContainer}>
                             <Text style={[styles.tipTitle, { color: colors.text }]}>Start Logging</Text>

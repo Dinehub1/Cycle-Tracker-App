@@ -172,7 +172,7 @@ export default function HistoryScreen() {
                         {/* BBT */}
                         {item.bbt && (
                             <View style={[styles.statChip, { backgroundColor: colors.ovulation + '15' }]}>
-                                <Ionicons name="thermometer-outline" size={12} color={colors.ovulation} />
+                                <Ionicons name="thermometer-outline" size={12} color={colors.ovulation} ></Ionicons>
                                 <Text style={[styles.statChipText, { color: colors.ovulation }]}>
                                     {item.bbt}°C
                                 </Text>
@@ -182,7 +182,7 @@ export default function HistoryScreen() {
                         {/* Water */}
                         {item.waterIntake && item.waterIntake > 0 && (
                             <View style={[styles.statChip, { backgroundColor: colors.info + '15' }]}>
-                                <Ionicons name="water-outline" size={12} color={colors.info} />
+                                <Ionicons name="water-outline" size={12} color={colors.info} ></Ionicons>
                                 <Text style={[styles.statChipText, { color: colors.info }]}>
                                     {item.waterIntake >= 1000 ? `${(item.waterIntake / 1000).toFixed(1)}L` : `${item.waterIntake}ml`}
                                 </Text>
@@ -207,7 +207,7 @@ export default function HistoryScreen() {
                     {/* Notes Preview */}
                     {item.notes && (
                         <View style={[styles.notesPreview, { backgroundColor: colors.backgroundSecondary }]}>
-                            <Ionicons name="chatbubble-outline" size={12} color={colors.textTertiary} />
+                            <Ionicons name="chatbubble-outline" size={12} color={colors.textTertiary} ></Ionicons>
                             <Text style={[styles.notesText, { color: colors.textSecondary }]} numberOfLines={2}>
                                 {item.notes}
                             </Text>
@@ -236,7 +236,7 @@ export default function HistoryScreen() {
                     onPress={() => router.push('/log-symptoms')}
                     accessibilityLabel="Log today's symptoms"
                 >
-                    <Ionicons name="add" size={20} color="#fff" />
+                    <Ionicons name="add" size={20} color="#fff" ></Ionicons>
                     <Text style={styles.logButtonText}>Log</Text>
                 </TouchableOpacity>
             </View>
@@ -288,7 +288,7 @@ export default function HistoryScreen() {
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <View style={[styles.emptyIcon, { backgroundColor: colors.primary + '15' }]}>
-                            <Ionicons name="calendar-outline" size={48} color={colors.primary} />
+                            <Ionicons name="calendar-outline" size={48} color={colors.primary} ></Ionicons>
                         </View>
                         <Text style={[styles.emptyTitle, { color: colors.text }]}>
                             {activeFilter === 'All' ? 'No entries yet' : `No ${activeFilter.toLowerCase()} logged`}
@@ -303,7 +303,7 @@ export default function HistoryScreen() {
                                 style={[styles.emptyCTA, { backgroundColor: colors.primary }]}
                                 onPress={() => router.push('/log-symptoms')}
                             >
-                                <Ionicons name="add-circle" size={20} color="#fff" />
+                                <Ionicons name="add-circle" size={20} color="#fff" ></Ionicons>
                                 <Text style={styles.emptyCTAText}>Log Your First Day</Text>
                             </TouchableOpacity>
                         )}

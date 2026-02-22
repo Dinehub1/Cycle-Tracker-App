@@ -195,7 +195,7 @@ export default function LogSymptomsScreen() {
                             if (prev >= maxPast) setSelectedDate(prev);
                         }}
                     >
-                        <Ionicons name="chevron-back" size={18} color={colors.primary} />
+                        <Ionicons name="chevron-back" size={18} color={colors.primary} ></Ionicons>
                     </TouchableOpacity>
                     <View style={{ flex: 1, alignItems: 'center' }}>
                         <Text style={[styles.dateBannerTitle, { color: colors.text }]}>
@@ -221,7 +221,7 @@ export default function LogSymptomsScreen() {
                             if (next <= new Date()) setSelectedDate(next);
                         }}
                     >
-                        <Ionicons name="chevron-forward" size={18} color={isToday ? colors.textTertiary : colors.primary} />
+                        <Ionicons name="chevron-forward" size={18} color={isToday ? colors.textTertiary : colors.primary} ></Ionicons>
                     </TouchableOpacity>
                 </View>
 
@@ -229,7 +229,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.period + '20' }]}>
-                            <Ionicons name="water" size={20} color={colors.period} />
+                            <Ionicons name="water" size={20} color={colors.period} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Flow</Text>
                     </View>
@@ -276,7 +276,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.ovulation + '20' }]}>
-                            <Ionicons name="happy" size={20} color={colors.ovulation} />
+                            <Ionicons name="happy" size={20} color={colors.ovulation} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Mood</Text>
                     </View>
@@ -312,7 +312,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.info + '20' }]}>
-                            <Ionicons name="medical" size={20} color={colors.info} />
+                            <Ionicons name="medical" size={20} color={colors.info} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Symptoms</Text>
                         {symptoms.length > 0 && (
@@ -351,7 +351,7 @@ export default function LogSymptomsScreen() {
                                         {symptom.label}
                                     </Text>
                                     {isSelected && (
-                                        <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={{ marginLeft: 2 }} />
+                                        <Ionicons name="checkmark-circle" size={16} color={colors.primary} style={{ marginLeft: 2 }} ></Ionicons>
                                     )}
                                 </TouchableOpacity>
                             );
@@ -363,7 +363,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.luteal + '20' }]}>
-                            <Ionicons name="bed-outline" size={20} color={colors.luteal} />
+                            <Ionicons name="bed-outline" size={20} color={colors.luteal} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Sleep Quality</Text>
                         <Text style={[styles.optionalLabel, { color: colors.textTertiary }]}> (optional)</Text>
@@ -398,7 +398,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.ovulation + '20' }]}>
-                            <Ionicons name="thermometer-outline" size={20} color={colors.ovulation} />
+                            <Ionicons name="thermometer-outline" size={20} color={colors.ovulation} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Basal Body Temp</Text>
                         <Text style={[styles.optionalLabel, { color: colors.textTertiary }]}> (optional)</Text>
@@ -428,7 +428,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.info + '20' }]}>
-                            <Ionicons name="water-outline" size={20} color={colors.info} />
+                            <Ionicons name="water-outline" size={20} color={colors.info} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Water Intake</Text>
                     </View>
@@ -467,7 +467,7 @@ export default function LogSymptomsScreen() {
                             onPress={() => setWaterIntake(prev => Math.max(0, prev - 250))}
                             accessibilityLabel="Decrease water intake by 250ml"
                         >
-                            <Ionicons name="remove" size={20} color={colors.text} />
+                            <Ionicons name="remove" size={20} color={colors.text} ></Ionicons>
                         </TouchableOpacity>
                         <Text style={[styles.waterCustomLabel, { color: colors.textSecondary }]}>
                             Adjust by 250ml
@@ -477,7 +477,7 @@ export default function LogSymptomsScreen() {
                             onPress={() => setWaterIntake(prev => Math.min(5000, prev + 250))}
                             accessibilityLabel="Increase water intake by 250ml"
                         >
-                            <Ionicons name="add" size={20} color={colors.text} />
+                            <Ionicons name="add" size={20} color={colors.text} ></Ionicons>
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -486,7 +486,7 @@ export default function LogSymptomsScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <View style={[styles.sectionIcon, { backgroundColor: colors.backgroundTertiary }]}>
-                            <Ionicons name="create" size={20} color={colors.primary} />
+                            <Ionicons name="create" size={20} color={colors.primary} ></Ionicons>
                         </View>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Notes</Text>
                     </View>
@@ -527,7 +527,7 @@ export default function LogSymptomsScreen() {
                         <ActivityIndicator color="#fff" />
                     ) : (
                         <>
-                            <Ionicons name="checkmark-circle" size={24} color="#fff" />
+                            <Ionicons name="checkmark-circle" size={24} color="#fff" ></Ionicons>
                             <Text style={styles.saveButtonText}>
                                 {existingEntry ? 'Update Entry' : 'Save Entry'}
                             </Text>

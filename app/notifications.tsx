@@ -128,7 +128,7 @@ export default function NotificationsScreen() {
                 {/* Cycle Reminders */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="sync-outline" size={20} color={colors.primary} />
+                        <Ionicons name="sync-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Cycle Reminders</Text>
                     </View>
                     <View style={[styles.reminderCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
@@ -146,7 +146,7 @@ export default function NotificationsScreen() {
                 {/* Daily Health */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="heart-outline" size={20} color={colors.primary} />
+                        <Ionicons name="heart-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Daily Health</Text>
                     </View>
                     <View style={[styles.reminderCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
@@ -164,7 +164,7 @@ export default function NotificationsScreen() {
                             <Text style={[styles.reminderTitle, { color: colors.text }]}>Reminder Time</Text>
                             <View style={styles.timeValue}>
                                 <Text style={[styles.timeText, { color: colors.primary }]}>{reminderTime}</Text>
-                                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} />
+                                <Ionicons name="chevron-forward" size={16} color={colors.textTertiary} ></Ionicons>
                             </View>
                         </TouchableOpacity>
                     </View>
@@ -172,7 +172,7 @@ export default function NotificationsScreen() {
 
                 {/* Info Note */}
                 <View style={[styles.infoCard, { backgroundColor: colors.backgroundTertiary }]}>
-                    <Ionicons name="information-circle-outline" size={20} color={colors.primary} />
+                    <Ionicons name="information-circle-outline" size={20} color={colors.primary} ></Ionicons>
                     <Text style={[styles.infoText, { color: colors.textSecondary }]}>
                         Notifications help you stay on top of your health journey. Tap on Reminder Time to cycle through time options.
                     </Text>

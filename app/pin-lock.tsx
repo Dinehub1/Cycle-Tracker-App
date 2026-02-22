@@ -127,7 +127,7 @@ export default function PinLockScreen() {
                                         style={styles.numberButton}
                                         onPress={handleBiometric}
                                     >
-                                        <Ionicons name="finger-print" size={28} color={colors.primary} />
+                                        <Ionicons name="finger-print" size={28} color={colors.primary} ></Ionicons>
                                     </TouchableOpacity>
                                 );
                             }
@@ -138,7 +138,7 @@ export default function PinLockScreen() {
                                         style={styles.numberButton}
                                         onPress={handleDelete}
                                     >
-                                        <Ionicons name="backspace-outline" size={28} color={colors.text} />
+                                        <Ionicons name="backspace-outline" size={28} color={colors.text} ></Ionicons>
                                     </TouchableOpacity>
                                 );
                             }
@@ -163,7 +163,7 @@ export default function PinLockScreen() {
             <View style={styles.content}>
                 {/* Logo/Icon */}
                 <View style={[styles.logoContainer, { backgroundColor: colors.primary }]}>
-                    <Ionicons name="flower-outline" size={40} color="#fff" />
+                    <Ionicons name="flower-outline" size={40} color="#fff" ></Ionicons>
                 </View>
 
                 {/* Title */}

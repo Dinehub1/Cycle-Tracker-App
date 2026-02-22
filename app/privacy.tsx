@@ -146,7 +146,7 @@ export default function PrivacyScreen() {
                 {/* Access Security */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} />
+                        <Ionicons name="shield-checkmark-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Access Security</Text>
                     </View>
 
@@ -195,7 +195,7 @@ export default function PrivacyScreen() {
                                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
                                 <TouchableOpacity style={styles.actionRow} onPress={handleChangePin}>
                                     <Text style={[styles.actionText, { color: colors.primary }]}>Change PIN</Text>
-                                    <Ionicons name="chevron-forward" size={20} color={colors.primary} />
+                                    <Ionicons name="chevron-forward" size={20} color={colors.primary} ></Ionicons>
                                 </TouchableOpacity>
                             </>
                         )}
@@ -222,7 +222,7 @@ export default function PrivacyScreen() {
                 {/* Data Management */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="folder-open-outline" size={20} color={colors.primary} />
+                        <Ionicons name="folder-open-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Data Management</Text>
                     </View>
 
@@ -231,7 +231,7 @@ export default function PrivacyScreen() {
                         onPress={handleExportData}
                     >
                         <View style={[styles.exportIcon, { backgroundColor: colors.backgroundTertiary }]}>
-                            <Ionicons name="download-outline" size={24} color={colors.primary} />
+                            <Ionicons name="download-outline" size={24} color={colors.primary} ></Ionicons>
                         </View>
                         <View style={styles.exportContent}>
                             <Text style={[styles.exportTitle, { color: colors.text }]}>Export All Data</Text>
@@ -239,14 +239,14 @@ export default function PrivacyScreen() {
                                 Download your history as JSON
                             </Text>
                         </View>
-                        <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                        <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} ></Ionicons>
                     </TouchableOpacity>
                 </View>
 
                 {/* Danger Zone */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="warning-outline" size={20} color={colors.error} />
+                        <Ionicons name="warning-outline" size={20} color={colors.error} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.error }]}>Danger Zone</Text>
                     </View>
 
@@ -254,7 +254,7 @@ export default function PrivacyScreen() {
                         style={[styles.dangerButton, { borderColor: colors.error }]}
                         onPress={handleDeleteAccount}
                     >
-                        <Ionicons name="trash-outline" size={20} color={colors.error} />
+                        <Ionicons name="trash-outline" size={20} color={colors.error} ></Ionicons>
                         <View style={styles.dangerContent}>
                             <Text style={[styles.dangerTitle, { color: colors.error }]}>Delete Account & Data</Text>
                             <Text style={[styles.dangerDescription, { color: colors.textSecondary }]}>
@@ -266,7 +266,7 @@ export default function PrivacyScreen() {
 
                 {/* Privacy Info */}
                 <View style={[styles.infoCard, { backgroundColor: colors.backgroundTertiary }]}>
-                    <Ionicons name="lock-closed" size={20} color={colors.primary} />
+                    <Ionicons name="lock-closed" size={20} color={colors.primary} ></Ionicons>
                     <View style={styles.infoContent}>
                         <Text style={[styles.infoText, { color: colors.textSecondary }]}>
                             Your health data is encrypted and stored locally on your device. We never collect or sell your personal information.

@@ -132,7 +132,7 @@ export default function ProfileScreen() {
                                     returnKeyType="done"
                                 />
                                 <TouchableOpacity onPress={handleSaveName}>
-                                    <Ionicons name="checkmark-circle" size={28} color={colors.primary} />
+                                    <Ionicons name="checkmark-circle" size={28} color={colors.primary} ></Ionicons>
                                 </TouchableOpacity>
                             </View>
                         ) : (
@@ -148,7 +148,7 @@ export default function ProfileScreen() {
                         style={[styles.editButton, { borderColor: colors.border }]}
                         onPress={editingName ? handleSaveName : handleEditName}
                     >
-                        <Ionicons name={editingName ? "checkmark" : "pencil-outline"} size={18} color={colors.primary} />
+                        <Ionicons name={editingName ? "checkmark" : "pencil-outline"} size={18} color={colors.primary} ></Ionicons>
                     </TouchableOpacity>
                 </View>
 
@@ -197,7 +197,7 @@ export default function ProfileScreen() {
                                     }
                                 ]}>
                                     {profile.goal === goal.id && (
-                                        <Ionicons name="checkmark" size={14} color="#fff" />
+                                        <Ionicons name="checkmark" size={14} color="#fff" ></Ionicons>
                                     )}
                                 </View>
                             </TouchableOpacity>
@@ -212,7 +212,7 @@ export default function ProfileScreen() {
                     <View style={[styles.detailsCard, { backgroundColor: colors.cardBackground, borderColor: colors.cardBorder }]}>
                         <View style={styles.detailRow}>
                             <View style={styles.detailLeft}>
-                                <Ionicons name="calendar-outline" size={20} color={colors.primary} />
+                                <Ionicons name="calendar-outline" size={20} color={colors.primary} ></Ionicons>
                                 <Text style={[styles.detailLabel, { color: colors.text }]}>Average Cycle</Text>
                             </View>
                             <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{cycleData.cycleLength} days</Text>
@@ -222,7 +222,7 @@ export default function ProfileScreen() {
 
                         <View style={styles.detailRow}>
                             <View style={styles.detailLeft}>
-                                <Ionicons name="water-outline" size={20} color={colors.primary} />
+                                <Ionicons name="water-outline" size={20} color={colors.primary} ></Ionicons>
                                 <Text style={[styles.detailLabel, { color: colors.text }]}>Period Length</Text>
                             </View>
                             <Text style={[styles.detailValue, { color: colors.textSecondary }]}>{cycleData.periodLength} days</Text>
@@ -232,7 +232,7 @@ export default function ProfileScreen() {
 
                         <View style={styles.detailRow}>
                             <View style={styles.detailLeft}>
-                                <Ionicons name="pulse-outline" size={20} color={colors.primary} />
+                                <Ionicons name="pulse-outline" size={20} color={colors.primary} ></Ionicons>
                                 <Text style={[styles.detailLabel, { color: colors.text }]}>Luteal Phase</Text>
                             </View>
                             <Text style={[styles.detailValue, { color: colors.textSecondary }]}>~14 days</Text>
@@ -255,10 +255,10 @@ export default function ProfileScreen() {
                             onPress={() => router.push(item.route as any)}
                         >
                             <View style={[styles.menuIcon, { backgroundColor: colors.backgroundSecondary }]}>
-                                <Ionicons name={item.icon as any} size={20} color={colors.primary} />
+                                <Ionicons name={item.icon as any} size={20} color={colors.primary} ></Ionicons>
                             </View>
                             <Text style={[styles.menuLabel, { color: colors.text }]}>{item.label}</Text>
-                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} />
+                            <Ionicons name="chevron-forward" size={20} color={colors.textTertiary} ></Ionicons>
                         </TouchableOpacity>
                     ))}
                 </View>
@@ -268,7 +268,7 @@ export default function ProfileScreen() {
                     style={[styles.logoutButton, { borderColor: colors.error }]}
                     onPress={handleLogOut}
                 >
-                    <Ionicons name="log-out-outline" size={20} color={colors.error} />
+                    <Ionicons name="log-out-outline" size={20} color={colors.error} ></Ionicons>
                     <Text style={[styles.logoutText, { color: colors.error }]}>Log Out</Text>
                 </TouchableOpacity>
 
@@ -277,7 +277,7 @@ export default function ProfileScreen() {
                     style={[styles.logoutButton, { borderColor: colors.error, marginTop: Spacing.sm, borderStyle: 'dashed' }]}
                     onPress={handleDeleteData}
                 >
-                    <Ionicons name="trash-outline" size={20} color={colors.error} />
+                    <Ionicons name="trash-outline" size={20} color={colors.error} ></Ionicons>
                     <Text style={[styles.logoutText, { color: colors.error }]}>Delete All Data</Text>
                 </TouchableOpacity>
             </ScrollView>

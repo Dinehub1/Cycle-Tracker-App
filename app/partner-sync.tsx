@@ -112,7 +112,7 @@ export default function PartnerSyncScreen() {
             >
                 {/* Hero Section */}
                 <View style={[styles.heroCard, { backgroundColor: colors.primary }]}>
-                    <Ionicons name="heart-circle" size={48} color="#fff" />
+                    <Ionicons name="heart-circle" size={48} color="#fff" ></Ionicons>
                     <Text style={styles.heroTitle}>Share the Journey</Text>
                     <Text style={styles.heroDescription}>
                         Syncing your cycle info helps your partner understand your needs and offer the right support at the right time.
@@ -122,7 +122,7 @@ export default function PartnerSyncScreen() {
                 {/* What to Share */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="share-outline" size={20} color={colors.primary} />
+                        <Ionicons name="share-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>What to Share</Text>
                     </View>
 
@@ -131,7 +131,7 @@ export default function PartnerSyncScreen() {
                             <React.Fragment key={option.id}>
                                 <View style={styles.sharingRow}>
                                     <View style={[styles.sharingIcon, { backgroundColor: colors.backgroundTertiary }]}>
-                                        <Ionicons name={option.icon} size={20} color={colors.primary} />
+                                        <Ionicons name={option.icon} size={20} color={colors.primary} ></Ionicons>
                                     </View>
                                     <View style={styles.sharingInfo}>
                                         <Text style={[styles.sharingTitle, { color: colors.text }]}>{option.title}</Text>
@@ -156,7 +156,7 @@ export default function PartnerSyncScreen() {
 
                 {/* Privacy Info */}
                 <View style={[styles.infoCard, { backgroundColor: colors.backgroundTertiary }]}>
-                    <Ionicons name="lock-closed" size={20} color={colors.primary} />
+                    <Ionicons name="lock-closed" size={20} color={colors.primary} ></Ionicons>
                     <Text style={[styles.infoText, { color: colors.textSecondary }]}>
                         Your data is end-to-end encrypted. You can stop sharing at any time and your partner will no longer have access to your data history.
                     </Text>
@@ -165,7 +165,7 @@ export default function PartnerSyncScreen() {
                 {/* Connected Partners */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
-                        <Ionicons name="people-outline" size={20} color={colors.primary} />
+                        <Ionicons name="people-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.sectionTitle, { color: colors.text }]}>Connected Partners</Text>
                     </View>
 
@@ -189,7 +189,7 @@ export default function PartnerSyncScreen() {
                                 style={styles.removeButton}
                                 onPress={() => handleRemovePartner(partner.id)}
                             >
-                                <Ionicons name="close-circle" size={24} color={colors.error} />
+                                <Ionicons name="close-circle" size={24} color={colors.error} ></Ionicons>
                             </TouchableOpacity>
                         </View>
                     ))}
@@ -198,7 +198,7 @@ export default function PartnerSyncScreen() {
                         style={[styles.inviteButton, { borderColor: colors.primary }]}
                         onPress={handleInvitePartner}
                     >
-                        <Ionicons name="person-add-outline" size={20} color={colors.primary} />
+                        <Ionicons name="person-add-outline" size={20} color={colors.primary} ></Ionicons>
                         <Text style={[styles.inviteText, { color: colors.primary }]}>Invite Partner</Text>
                     </TouchableOpacity>
                 </View>

@@ -198,7 +198,7 @@ const DiscoverScreen = () => {
                         <Text style={[styles.cardSummary, { color: colors.textSecondary }]} numberOfLines={2}>{item.summary}</Text>
                         <View style={styles.cardMeta}>
                             <View style={styles.metaItem}>
-                                <Ionicons name="time-outline" size={12} color={colors.textTertiary} />
+                                <Ionicons name="time-outline" size={12} color={colors.textTertiary} ></Ionicons>
                                 <Text style={[styles.metaText, { color: colors.textTertiary }]}>{item.duration}</Text>
                             </View>
                         </View>
@@ -222,7 +222,7 @@ const DiscoverScreen = () => {
 
             {/* Search */}
             <View style={[styles.searchContainer, { backgroundColor: colors.backgroundSecondary, borderColor: colors.border }]}>
-                <Ionicons name="search-outline" size={18} color={colors.textTertiary} style={styles.searchIcon} />
+                <Ionicons name="search-outline" size={18} color={colors.textTertiary} style={styles.searchIcon} ></Ionicons>
                 <TextInput
                     placeholder="Search articles, topics..."
                     style={[styles.searchInput, { color: colors.text }]}
@@ -232,7 +232,7 @@ const DiscoverScreen = () => {
                 />
                 {searchQuery.length > 0 && (
                     <TouchableOpacity onPress={() => setSearchQuery('')}>
-                        <Ionicons name="close-circle" size={18} color={colors.textTertiary} />
+                        <Ionicons name="close-circle" size={18} color={colors.textTertiary} ></Ionicons>
                     </TouchableOpacity>
                 )}
             </View>
@@ -293,7 +293,7 @@ const DiscoverScreen = () => {
                             onPress={() => router.push(`/article?id=${featured!.id}`)}
                         >
                             <View style={styles.featuredBadge}>
-                                <Ionicons name="star" size={12} color="#fff" />
+                                <Ionicons name="star" size={12} color="#fff" ></Ionicons>
                                 <Text style={styles.featuredBadgeText}>FEATURED</Text>
                             </View>
                             <Text style={styles.featuredEmoji}>{featured!.emoji}</Text>
@@ -301,11 +301,11 @@ const DiscoverScreen = () => {
                             <Text style={styles.featuredSummary}>{featured!.summary}</Text>
                             <View style={styles.featuredMeta}>
                                 <View style={styles.featuredMetaItem}>
-                                    <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" />
+                                    <Ionicons name="time-outline" size={14} color="rgba(255,255,255,0.8)" ></Ionicons>
                                     <Text style={styles.featuredMetaText}>{featured!.duration}</Text>
                                 </View>
                                 <View style={styles.featuredMetaItem}>
-                                    <Ionicons name="school-outline" size={14} color="rgba(255,255,255,0.8)" />
+                                    <Ionicons name="school-outline" size={14} color="rgba(255,255,255,0.8)" ></Ionicons>
                                     <Text style={styles.featuredMetaText}>{featured!.category}</Text>
                                 </View>
                             </View>
@@ -315,7 +315,7 @@ const DiscoverScreen = () => {
                 ListEmptyComponent={
                     <View style={styles.emptyState}>
                         <View style={[styles.emptyIcon, { backgroundColor: colors.primary + '15' }]}>
-                            <Ionicons name="search" size={40} color={colors.primary} />
+                            <Ionicons name="search" size={40} color={colors.primary} ></Ionicons>
                         </View>
                         <Text style={[styles.emptyTitle, { color: colors.text }]}>No articles found</Text>
                         <Text style={[styles.emptyDescription, { color: colors.textSecondary }]}>

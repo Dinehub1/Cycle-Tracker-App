@@ -24,6 +24,17 @@ import { useCycleData, useOnboarding, useUserProfile } from '@/hooks/use-storage
 
 const { width } = Dimensions.get('window');
 
+const KeyboardDismissWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (Platform.OS === 'web') {
+        return <>{children}</>;
+    }
+    return (
+        <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            {children}
+        </TouchableWithoutFeedback>
+    );
+};
+
 export default function OnboardingScreen() {
     const router = useRouter();
     const colorScheme = useColorScheme();
@@ -263,7 +274,7 @@ export default function OnboardingScreen() {
                 behavior={Platform.OS === "ios" ? "padding" : "height"}
                 style={{ flex: 1 }}
             >
-                <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+                <KeyboardDismissWrapper>
                     <View style={styles.content}>
                         {/* Header / Progress */}
                         <View style={styles.header}>
@@ -303,7 +314,7 @@ export default function OnboardingScreen() {
                             </TouchableOpacity>
                         </View>
                     </View>
-                </TouchableWithoutFeedback>
+                </KeyboardDismissWrapper>
             </KeyboardAvoidingView>
         </SafeAreaView>
     );

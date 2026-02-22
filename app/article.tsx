@@ -190,7 +190,7 @@ export default function ArticleScreen() {
                     style={[styles.headerBtn, { backgroundColor: colors.backgroundSecondary }]}
                     onPress={() => router.back()}
                 >
-                    <Ionicons name="arrow-back" size={20} color={colors.text} />
+                    <Ionicons name="arrow-back" size={20} color={colors.text} ></Ionicons>
                 </TouchableOpacity>
                 <View style={{ flex: 1 }} />
                 <TouchableOpacity
@@ -220,11 +220,11 @@ export default function ArticleScreen() {
                 {/* Meta */}
                 <View style={styles.metaRow}>
                     <View style={[styles.metaChip, { backgroundColor: colors.backgroundSecondary }]}>
-                        <Ionicons name="time-outline" size={14} color={colors.textSecondary} />
+                        <Ionicons name="time-outline" size={14} color={colors.textSecondary} ></Ionicons>
                         <Text style={[styles.metaText, { color: colors.textSecondary }]}>{article.duration} read</Text>
                     </View>
                     <View style={[styles.metaChip, { backgroundColor: colors.backgroundSecondary }]}>
-                        <Ionicons name="list-outline" size={14} color={colors.textSecondary} />
+                        <Ionicons name="list-outline" size={14} color={colors.textSecondary} ></Ionicons>
                         <Text style={[styles.metaText, { color: colors.textSecondary }]}>{article.sections.length} sections</Text>
                     </View>
                 </View>
