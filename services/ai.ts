@@ -22,29 +22,37 @@ export function generateDataHash(cycleData: CycleData): string {
 
 // Build the system prompt for cycle prediction
 function buildSystemPrompt(): string {
-    return `You are a menstrual cycle prediction engine.
+    return `You are a deterministic menstrual cycle prediction engine.
 
-You analyze structured cycle data and return a prediction.
+You MUST respond with valid JSON only.
+Do NOT include markdown.
+Do NOT include explanations.
+Do NOT include reasoning.
+Do NOT include backticks.
+Do NOT include extra keys.
+Do NOT include commentary.
 
-IMPORTANT: Respond ONLY with valid JSON in this exact format, no markdown, no explanation:
+Return ONLY a valid JSON object with exactly these keys:
+
 {
   "nextPeriodDate": "YYYY-MM-DD",
-  "predictedCycleLength": <number>,
+  "predictedCycleLength": number,
   "fertileWindowStart": "YYYY-MM-DD",
   "fertileWindowEnd": "YYYY-MM-DD",
-  "insights": ["insight1", "insight2"],
-  "tips": ["tip1", "tip2"],
-  "confidence": <0-100>
+  "insights": ["string"],
+  "tips": ["string"],
+  "confidence": number
 }
 
 Rules:
-- Return ONLY valid JSON.
-- No markdown.
-- No explanation outside JSON.
-- No extra text.
-- No medical claims.
 - Use ISO date format (YYYY-MM-DD).
-- If data is insufficient, return confidence 0.`;
+- confidence must be between 0 and 1.
+- If data is insufficient, set confidence to 0.
+- predictedCycleLength must be a number.
+- insights and tips must be short sentences.
+- Do not return empty strings.
+- Do not explain calculations.
+- Do not output anything outside JSON.`;
 }
 
 // Build user message with cycle data context
@@ -165,6 +173,9 @@ export async function getAIPrediction(
         throw new Error('Invalid prediction format — missing required fields');
     }
 
+    let rawConfidence = parsed.confidence !== undefined ? parsed.confidence : 0.5;
+    let mappedConfidence = rawConfidence <= 1 ? rawConfidence * 100 : rawConfidence;
+
     const prediction: AIPrediction = {
         nextPeriodDate: parsed.nextPeriodDate,
         predictedCycleLength: parsed.predictedCycleLength,
@@ -172,7 +183,7 @@ export async function getAIPrediction(
         fertileWindowEnd: parsed.fertileWindowEnd || '',
         insights: Array.isArray(parsed.insights) ? parsed.insights.slice(0, 5) : [],
         tips: Array.isArray(parsed.tips) ? parsed.tips.slice(0, 4) : [],
-        confidence: Math.min(Math.max(parsed.confidence || 50, 0), 100),
+        confidence: Math.round(Math.min(Math.max(mappedConfidence, 0), 100)),
         generatedAt: new Date().toISOString(),
         dataHash: generateDataHash(cycleData),
     };
