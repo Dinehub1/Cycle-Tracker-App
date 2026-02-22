@@ -138,7 +138,7 @@ export default function OnboardingScreen() {
 
     // --- Steps Components ---
 
-    const WelcomeStep = () => (
+    const renderWelcomeStep = () => (
         <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>
                 <Ionicons name="rose-outline" size={80} color={colors.primary} />
@@ -161,7 +161,7 @@ export default function OnboardingScreen() {
         </View>
     );
 
-    const CalendarStep = () => (
+    const renderCalendarStep = () => (
         <View style={styles.stepContainer}>
             <Text style={[styles.title, { color: colors.text }]}>Last Period?</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -204,7 +204,7 @@ export default function OnboardingScreen() {
         </View>
     );
 
-    const GoalsStep = () => (
+    const renderGoalsStep = () => (
         <View style={styles.stepContainer}>
             <Text style={[styles.title, { color: colors.text }]}>Your Cycle</Text>
             <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
@@ -241,7 +241,7 @@ export default function OnboardingScreen() {
         </View>
     );
 
-    const NotificationStep = () => (
+    const renderNotificationStep = () => (
         <View style={styles.stepContainer}>
             <View style={styles.iconContainer}>
                 <Ionicons name="notifications-outline" size={80} color={colors.primary} />
@@ -290,11 +290,11 @@ export default function OnboardingScreen() {
                         </View>
 
                         {/* Step Content */}
-                        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false}>
-                            {step === 0 && <WelcomeStep />}
-                            {step === 1 && <CalendarStep />}
-                            {step === 2 && <GoalsStep />}
-                            {step === 3 && <NotificationStep />}
+                        <ScrollView contentContainerStyle={styles.scrollContent} showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+                            {step === 0 && renderWelcomeStep()}
+                            {step === 1 && renderCalendarStep()}
+                            {step === 2 && renderGoalsStep()}
+                            {step === 3 && renderNotificationStep()}
                         </ScrollView>
 
                         {/* Footer */}

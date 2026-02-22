@@ -21,6 +21,7 @@ import {
     UserProfile,
 } from '@/types';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DeviceEventEmitter } from 'react-native';
 
 // ─── Cycle phase + status calculator ─────────────────────────────────────────
 
@@ -210,22 +211,35 @@ export function useOnboarding() {
     const [isComplete, setIsComplete] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);
 
-    useEffect(() => {
-        isOnboardingComplete().then(complete => {
-            setIsComplete(complete);
-            setLoading(false);
-        });
+    const loadData = useCallback(async () => {
+        const complete = await isOnboardingComplete();
+        setIsComplete(complete);
+        setLoading(false);
     }, []);
+
+    useEffect(() => {
+        loadData();
+        const sub = DeviceEventEmitter.addListener('onboardingStatusChanged', (status) => {
+            setIsComplete(status);
+        });
+        return () => sub.remove();
+    }, [loadData]);
 
     const completeOnboarding = useCallback(async () => {
         const success = await setOnboardingComplete(true);
-        if (success) setIsComplete(true);
+        if (success) {
+            setIsComplete(true);
+            DeviceEventEmitter.emit('onboardingStatusChanged', true);
+        }
         return success;
     }, []);
 
     const clearData = useCallback(async () => {
         const success = await clearAllData();
-        if (success) setIsComplete(false);
+        if (success) {
+            setIsComplete(false);
+            DeviceEventEmitter.emit('onboardingStatusChanged', false);
+        }
         return success;
     }, []);
 
