@@ -1,16 +1,16 @@
 {
   "expo": {
-    "name": "Cycle Tracker",
-    "slug": "cycle-tracker",
+    "name": "CycleAI",
+    "slug": "cycleai",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "cycletracker",
+    "scheme": "cycleai",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.cycletracker.app",
+      "bundleIdentifier": "com.cycleai.app",
       "buildNumber": "1",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -23,7 +23,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.cycletracker.app",
+      "package": "com.cycleai.app",
       "versionCode": 1
     },
     "web": {
@@ -52,7 +52,7 @@
     "extra": {
       "router": {},
       "eas": {
-        "projectId": "8c47ed5b-3f76-427a-9617-c97ceb2d0011"
+        "projectId": "3359600c-b844-46da-8993-033d09c745ac"
       }
     }
   }
